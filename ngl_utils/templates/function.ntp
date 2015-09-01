@@ -1,0 +1,10 @@
+/**
+  * @brief  {func_name}
+  *         {func_desc}
+  * @param  None
+  * @retval None
+*/
+{static} void {func_name}(void)
+{{
+    /* todo! */
+}}

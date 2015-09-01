@@ -1,0 +1,25 @@
+////
+// Font data for {name}
+////
+
+#include "NGL.h"
+
+// Character bitmaps data for {name}
+const uint8_t {name}_bitmaps[] = {
+{bitmaps_data}
+};
+
+// Character descriptors for {name}
+// {  Char width in bits, Char height in bits, Offset in bytes  }
+const NGL_CharInfo {name}_descriptors[] = {
+{descriptors_data}
+};
+
+// Font information for '{font_title_name}'
+const NGL_Font {name} = {
+    '{font_start_char}',  // start character
+    '{font_end_char}',    // end character
+    {space_width},      // width, in pixels, of space character
+    {name}_descriptors, // character descriptor array
+    {name}_bitmaps,     // character bitmap array
+};

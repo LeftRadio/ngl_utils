@@ -1,0 +1,27 @@
+/**
+  * @brief  {pageName}_Draw
+  *         Draw {pageName} and {pageName} objects function
+  * @param  None
+  * @retval None
+*/
+static void {pageName}_Draw(void)
+{{
+    uint8_t cnt = 0;
+    
+    /* Clear all screen */
+    LCD_Clear_AllScreen({page_backcolor});
+
+{graphics_objects}
+
+    /* Draw all Labels */
+    for(cnt = 0; cnt < {pageName}.LabelsCount; cnt++)
+    {{
+        NGL_DrawLabel({pageName}.Labels[cnt]);
+    }}
+
+    /* Draw all Buttons */
+    for(cnt = 0; cnt < {pageName}.ButtonsCount; cnt++)
+    {{
+        NGL_DrawButton({pageName}.Buttons[cnt], ResetButton);
+    }}
+}}

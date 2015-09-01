@@ -1,0 +1,22 @@
+////
+// Bitmap data for {name}; compressed - {compressed}
+////
+
+#include "NGL.h"
+
+// {name} array, size {data_len_bytes} bytes
+const {datatype} {name}_data[] = {
+{data}
+};
+
+// Bitmap information for {name}
+const NGL_Image {name} = {
+    {width},            // Picture Width - 1
+    {height},            // Picture Height - 1
+    {compressed},        // Copressed flag, NONE - 0, RLE - 1, JPG - 2
+    {color_bit},            // Color bit per pixel
+    {data_word_size},            // Bitmap data array value bits
+    {data_len_bytes},            // Bitmap array size
+    {name}_data,              // Bitmap point array
+};
+

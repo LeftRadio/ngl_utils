@@ -1,0 +1,55 @@
+/**
+  ******************************************************************************
+  * @file       {pageName}.c
+  * @author     Neil Lab :: Left Radio
+  * @version    v1.0.0
+  * @date       {date}
+  * @brief      {brief}
+  ******************************************************************************
+**/
+
+/* Define --------------------------------------------------------------------*/
+
+/* Includes ------------------------------------------------------------------*/
+#include "NGL.h"
+#include "fonts.h"
+#include "bitmaps.h"
+{include}
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Extern functions ----------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+{protFunctions}
+
+/* Private variables ---------------------------------------------------------*/
+NGL_Page {pageName} = {{
+    {{ {rect} }},       // [X0, Y0, X1, Y1]
+    {clip},             // Clip for Page
+    {clip_id},          // Clip object ID
+    {bcolor},           // BackColor
+    {start_btn},        // first button index
+    {btn_cnt},          // All buttons count
+    {sel_indx},         // Selected button index
+    {old_indx},         // Old selected button index
+    {lbl_cnt},          // Labels count
+
+    /* Buttons pointers array */
+    {{ {btn_pnt} }},
+
+    /* Labels pointers array */
+    {{ {lbl_pnt} }},
+
+    TRUE,               // Exit allowed
+    {pageName}_Draw,    // Page draw function
+    (void*)0,           // Page CallBack function
+}};
+
+/* Private functions ---------------------------------------------------------*/
+{functions}
+
+
+/*********************************************************************************************************
+      END FILE
+*********************************************************************************************************/

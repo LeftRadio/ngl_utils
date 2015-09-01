@@ -1,0 +1,21 @@
+/* {pageName} {itemName} item */
+NGL_Button {itemName} = {{
+    {x},
+    {y},
+    {width},
+    {height},
+    {type},
+    {color},
+    {backColor},
+    {colorShift},
+    {bitmapName},
+    {fontName},
+    {text_X_shift},
+    {text_Y_shift},
+    {textColor},
+    "{text}",
+    ReClick_ENABLE,
+    {visible},
+    {status},
+    {eventName},
+}};
