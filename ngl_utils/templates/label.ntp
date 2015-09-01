@@ -1,0 +1,9 @@
+/* {pageName} {itemName} item */
+NGL_Label {itemName} = {{
+    {x},
+    {y},
+    {color},
+    {visible},
+    {text},
+    {fontName},
+}};

@@ -4,8 +4,8 @@
 
 #include "NGL.h"
 
-// {name} array, size {data_len_bytes} bytes
-const {datatype} {name}_data[] = {
+// {name} array, size - {data_len_in_bytes} bytes
+const {datatype} {name}_data[{data_len_in_words}] = {
 {data}
 };
 
@@ -16,7 +16,7 @@ const NGL_Image {name} = {
     {compressed},        // Copressed flag, NONE - 0, RLE - 1, JPG - 2
     {color_bit},            // Color bit per pixel
     {data_word_size},            // Bitmap data array value bits
-    {data_len_bytes},            // Bitmap array size
+    {data_len_in_words},            // Bitmap array size
     {name}_data,              // Bitmap point array
 };
 

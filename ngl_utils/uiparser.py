@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import glob
 import os
@@ -19,6 +21,7 @@ class UIParser(object):
         return self._uifile
 
     property = (set_uifile, get_uifile)
+
 
     def uiVersion(self):
         try:

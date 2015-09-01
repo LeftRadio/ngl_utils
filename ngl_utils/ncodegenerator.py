@@ -175,7 +175,7 @@ class NCodeGen(object):
 
         if 'text' not in item:
             item['text'] = 'label'
-            
+
         fontName = NCodeGen._formatFontPointer( item[ 'font' ] )
         code = label_template.format( pageName = pageName,
                                       itemName = item['name'],
@@ -367,7 +367,8 @@ class NBitmapCodeGen(object):
         '{compressed}':         bitmap.compressed,
         '{color_bit}':          bitmap.color_bit,
         '{data_word_size}':     bitmap.data_word_size,
-        '{data_len_bytes}':     bitmap.data_len_bytes,
+        '{data_len_in_words}':  bitmap.data_len_in_words,
+        '{data_len_in_bytes}':  bitmap.data_len_in_bytes,
         '{datatype}':           bitmap.datatype,
         '{data}':               bitmap.formatedData(),
         }

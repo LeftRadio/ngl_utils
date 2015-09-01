@@ -4,6 +4,8 @@ from PyQt5.QtCore import Qt, QSize, QRect, QPoint
 from PyQt5.QtGui import QFont, QFontMetrics, QImage, QPainter, QPen
 from PyQt5.QtWidgets import QApplication
 from ngl_utils.ncodegenerator import NFontCodeGen, NBitmapCodeGen
+from ngl_utils.messages import inform, error
+from ngl_utils.rle import rlem_encode
 
 # ------------------------------------------------------------------------------
 # NColor
@@ -345,7 +347,7 @@ class NGL_Font(object):
 class NBitmapsConverter(object):
     """docstring for NBitmapsConverter"""    
     @staticmethod
-    def convertParsedBitmap(bitmap, nformat, compress):        
+    def convertParsedBitmap(bitmap, nformat, compress):
         image = QImage( bitmap['path'] )
         image = image.scaled( QSize( int(bitmap['width']),
                                      int(bitmap['height']) ),
@@ -356,40 +358,147 @@ class NBitmapsConverter(object):
 
     @staticmethod
     def convertQImage(image, name, nformat, compress):
-        ngl_bitmap = NGL_Bitmap( name, image.width(), image.height() )
-
+        ngl_bitmap = NGL_Bitmap( name, image.width(), image.height(), compress )
+        
         for x in range( image.width() ):
             for y in range( image.height() ):
                 argb_pixel = image.pixel( x, y )
                 data = NColor.fromARGB( argb_pixel )
                 ngl_bitmap.data.append( data )
 
-        if compress != 'compressed_None':
-            ngl_bitmap.data = NBitmapsConverter.compressData( ngl_bitmap.data )
-            ngl_bitmap.compressed = compress.replace( 'compressed_', '' )        
+        if compress != 'None':
+            ngl_bitmap.data = NBitmapsConverter.compressData( image, ngl_bitmap, compress )                  
         
+        # code len in words and bytes
+        ngl_bitmap.data_len_in_words = len( ngl_bitmap.data )
+        ngl_bitmap.data_len_in_bytes = ngl_bitmap.data_len_in_words
+        if True in [ True for x in ngl_bitmap.data if x > 0xFF ]:
+            ngl_bitmap.data_len_in_bytes *= 2
+        
+        # generate data code
         ngl_bitmap.code = NBitmapCodeGen.bitmap( ngl_bitmap )
         
         return ngl_bitmap
 
     @staticmethod
-    def compressData(bitmap_data):
-        """ compress data RLE or JPG algs """
-        pass
+    def compressData(image, bitmap, compress):
+        """ compress data RLE or convert to JPG """
+        if compress == 'RLE':
+            data = rlem_encode( bitmap.data )
+            return data
+        
+        elif compress == 'JPG':
+            temp_jpg = './tmp_cnv.jpg'
+            image.save( temp_jpg )
+            with open(temp_jpg, 'rb') as f:
+                data = [ byte for byte in f.read() ]            
+            
+            bitmap.data_word_size = 8
+            bitmap.color_bit = 0
+            return data
+        
+        else:
+            return bitmap.data
+
+    # @staticmethod
+    # def rlem_encode(data):
+    #     count = 1       # count words
+    #     index = 0
+    #     start_index = 0    
+    #     out_list = []   # out RLEm compressed list
+        
+    #     # init state
+    #     if data[0] != data[1]:                
+    #         state = 'mismatch'
+    #     else:
+    #         state = 'match'
+
+    #     data_len = len( data )    
+    #     for index in range( data_len - 3 ):
+            
+    #         if state == 'match':
+                
+    #             if data[ index ] == data[ index+1 ] and index < data_len - 4:
+    #                 count += 1                
+    #             else:
+    #                 out_list.append( count )
+    #                 out_list.append( data[index] )                
+                    
+    #                 if data[ index+1 ] != data[ index+2 ]:
+    #                     state = 'mismatch'
+
+    #                 start_index = index + 1
+    #                 count = 1         
+
+    #         elif state == 'mismatch':
+                
+    #             odta = data[ start_index:index+1 ]
+
+    #             if data[ index ] != data[ index+1 ] and index < data_len - 4:
+                    
+    #                 if data[ index+1 ] == data[ index+2 ]:                   
+    #                     out_list.append( 0x8000 | count )
+    #                     out_list += [ word for word in odta ]
+    #                     state = 'match'
+    #                     count = 1
+    #                 else:
+    #                     count += 1
+    #             else:                
+    #                 if count > 1:                    
+    #                     out_list.append( 0x8000 | count )
+    #                     out_list += [ word for word in odta ]
+                    
+    #                 if data[index+1] == data[index+2]:
+    #                     state = 'match'
+    #                 start_index = index + 1
+    #                 count = 1       
+
+    #     out_list.append( 0x8000 | len(data[start_index:]) )       
+    #     out_list += [ word for word in data[start_index:] ] 
+        
+    #     return out_list
+
+    # @staticmethod
+    # def rlem_decode(data):
+    #     out_list = []   # out decompressed list
+
+    #     data_len = len( data )
+    #     index = 0
+
+    #     while index < data_len - 3:
+    #         # print(index, data[index])
+    #         word = int( data[index] )
+            
+    #         if word & 0x8000:
+    #             cnt = word & ~0x8000
+    #             for w in range(cnt):
+    #                 index += 1
+    #                 out_list.append( data[index] )
+    #             index += 1
+    #         else:
+    #             cnt = word
+    #             for w in range(cnt):                
+    #                 out_list.append( data[index+1] )
+    #             index += 2
+        
+    #     if type(out_list[1]) == type(str):
+    #         out_list = ''.join( out_list )
+
+    #     return out_list
 
 # ------------------------------------------------------------------------------
 # NGL_Font
 # ------------------------------------------------------------------------------
 class NGL_Bitmap(object):
 
-    def __init__(self, name, width, height):
+    def __init__(self, name, width, height, compress):
         self.name = name
         self.width = width
         self.height = height
-        self.compressed = 'None'
+        self.compressed = compress
         self.color_bit = 16
         self.data_word_size = 16
-        self.data_len_bytes = 0
+        self.data_len_in_bytes = 0
         self.datatype = 'uint16_t'
         self.data = []
         self.code = ''
