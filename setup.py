@@ -6,7 +6,8 @@ from ngl_utils.ngluic import __version__
 setup(
     name                    = 'ngl_utils',
     version                 = __version__,
-    description             = 'The ngl_utils joke in the world',
+    description             = ( 'ngl_utils the converting QtDesigner '
+                                '*.ui files utilities for embedded NGL library' ),
     author                  = 'Vladislav Kamenev',
     author_email            = 'wladkam@mail.com',
     url                     = '',

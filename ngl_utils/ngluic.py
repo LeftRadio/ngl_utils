@@ -11,7 +11,7 @@ from ngl_utils.nconverts import NColor
 from ngl_utils.ncodegenerator import NCodeGen, NFontCodeGen, NBitmapCodeGen
 from ngl_utils.messages import inform, error, newline
 
-__version__ = "1.2.5"
+__version__ = "1.2.72"
 
 # ------------------------------------------------------------------------------
 # NUIC
