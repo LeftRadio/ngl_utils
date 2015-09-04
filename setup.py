@@ -1,32 +1,38 @@
 
 from setuptools import setup
 from setuptools import find_packages
-from ngl_utils.ngluic import __version__
+
+print(find_packages())
 
 setup(
     name                    = 'ngl_utils',
-    version                 = __version__,
-    description             = ( 'ngl_utils the converting QtDesigner '
-                                '*.ui files utilities for embedded NGL library' ),
+    version                 = '1.3.3',
     author                  = 'Vladislav Kamenev',
-    author_email            = 'wladkam@mail.com',
-    url                     = '',
-    package_data            = { 'ngl_utils': ['templates/*.ntp'] },
-    packages                = find_packages(),
-    
-    entry_points = {
-        'console_scripts': ['ngluic = ngl_utils.ngluic:main'] },
+    author_email            = 'wladkam@mail.com',    
+    url                     = 'https://github.com/LeftRadio/ngl_utils',
+    description             = 'ngl_utils converting/generate code utilities for embedded NGL library',
+    long_description        = ( 
+"""ngl_utils included:
+ngluic - console converter QtDesigner *.ui files
+example: $ ngluic -u untitled.ui -d ./OutCodeDir --bitmap-compress JPG --verbose
 
+nglfcn - ui fonts convertor/generator util 
+nglfed - ui ngl font editor util
+
+""" ),
+    download_url            = 'https://github.com/LeftRadio/ngl_utils',
+    package_data            = { 'ngl_utils': ['templates/*.ntp'],
+                                'ngl_utils.nfont': ['qtres/*.ui'] },
+    packages                = find_packages(),    
+    
+    entry_points  = { 'console_scripts':
+         [ 'ngluic = ngl_utils.ngluic : main',
+           'nglfcn = ngl_utils.nfont.converterwidget : nfontConverterGUIStart',
+           'nglfed = ngl_utils.nfont.editwidget : nfontEditGUIStart' ] },
+    
     classifiers = [
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: X11 Applications',
-        'Environment :: MacOS X',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
-        'Operating System :: MacOS',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX',
-        'Operating System :: Unix',
+        'Development Status :: 4 - Beta',        
         'Programming Language :: Python :: 3'
         ],
+    license = 'MIT'
 )

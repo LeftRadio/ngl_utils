@@ -4,7 +4,8 @@ import sys
 import glob
 import os
 import xml.etree.ElementTree as ET
-from ngl_utils.nconverts import NGL_Font, NColor
+from ngl_utils.nfont.nfont import NGL_Font
+from ngl_utils.nbitmap.converter import NColor
 
 # ------------------------------------------------------------------------------
 # simple parser for Qt ui files

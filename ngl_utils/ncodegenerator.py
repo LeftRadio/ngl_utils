@@ -1,11 +1,9 @@
-import os, sys
+#!/usr/bin/env python3
+
+import os
+import sys
 from datetime import datetime
 import pkg_resources
-
-
-label_text_template = """
-
-"""
 
 # ------------------------------------------------------------------------------
 # NCodeGen

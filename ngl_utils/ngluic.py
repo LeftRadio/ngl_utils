@@ -4,14 +4,15 @@ import sys
 import glob
 import os
 import argparse
-from ngl_utils.uiparser import UIParser as UIP
-from ngl_utils.nconverts import NFontConverter as NFC
-from ngl_utils.nconverts import NBitmapsConverter as NBC
-from ngl_utils.nconverts import NColor
+from ngl_utils.uiparser import UIParser
+
+from ngl_utils.nfont.converter import NFontConverter
+from ngl_utils.nbitmap.converter import NColor, NBitmapsConverter
+
 from ngl_utils.ncodegenerator import NCodeGen, NFontCodeGen, NBitmapCodeGen
 from ngl_utils.messages import inform, error, newline
 
-__version__ = "1.2.72"
+__version__ = "1.3.3"
 
 # ------------------------------------------------------------------------------
 # NUIC
@@ -20,7 +21,7 @@ class NUIC(object):
     """docstring for NUIC"""
     def __init__(self, qt_uifile):
         super(NUIC, self).__init__()
-        self.parser = UIP( qt_uifile )
+        self.parser = UIParser( qt_uifile )
 
     def pageCode(self, page, verbose):
         if verbose:
@@ -49,7 +50,7 @@ class NUIC(object):
         if verbose:
             inform( 'converting font %s, %spt, bold=%s' % ( font['family'],
                                                   font['pointsize'], font['bold'] ) )
-        ngl_font = NFC.convertParsedQFont( chars_sets, font )
+        ngl_font = NFontConverter.convertParsedQFont( chars_sets, font )
         
         return ngl_font
 
@@ -64,7 +65,7 @@ class NUIC(object):
     
     def _convertBitmap(self, bitmap, compress, verbose):
         if os.path.exists( bitmap['path'] ):
-            ngl_bitmap = NBC.convertParsedBitmap( bitmap, 'format16', compress )
+            ngl_bitmap = NBitmapsConverter.convertParsedBitmap( bitmap, 'format16', compress )
             
             if verbose:
                 inform( ( 'converting bitmap {name}, size {width}x{height}, '
@@ -291,8 +292,6 @@ def main():
 
     # final !    
     inform( '-*-*- All works finish! :) --- out code locate in %s' % os.path.abspath(code_dirs['base']) )
-    
-
 
 # ------------------------------------------------------------------------------
 # program start here
