@@ -1,58 +1,63 @@
 #!/usr/bin/env python3
 
 import sys
-import glob
 import os
 import argparse
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QImage
+
 from ngl_utils.uiparser import UIParser
-
+from ngl_utils.nfont.nfont import NGL_Font
 from ngl_utils.nfont.converter import NFontConverter
-from ngl_utils.nbitmap.converter import NColor, NBitmapsConverter
-
+from ngl_utils.nbitmap.converter import NBitmapsConverter
 from ngl_utils.ncodegenerator import NCodeGen, NFontCodeGen, NBitmapCodeGen
 from ngl_utils.messages import inform, error, newline
 
 __version__ = "1.3.3"
 
-# ------------------------------------------------------------------------------
-# NUIC
-# ------------------------------------------------------------------------------
+
 class NUIC(object):
     """docstring for NUIC"""
+
     def __init__(self, qt_uifile):
         super(NUIC, self).__init__()
-        self.parser = UIParser( qt_uifile )
+        self.parser = UIParser(qt_uifile)
 
     def pageCode(self, page, verbose):
         if verbose:
-            inform('generate page code for [ %s ] ' % page['name'] )
-        return NCodeGen.generetePageCode( page )
+            inform('generate page code for [ %s ] ' % page['name'])
+        return NCodeGen.generetePageCode(page)
 
     def buttonsCode(self, page, verbose):
-        if verbose:            
-            inform('generate buttons code for page [ %s ]' % page['name'] )
-        return NCodeGen.generateButtonsHeader( page )
+        if verbose:
+            inform('generate buttons code for page [ %s ]' % page['name'])
+
+        return NCodeGen.generateButtonsHeader(page)
 
     def labelsCode(self, page, verbose):
         if verbose:
-            inform('generate labels code for page [ %s ]' % page['name'] )
-        return NCodeGen.generateLabelsHeader( page )
-    
+            inform('generate labels code for page [ %s ]' % page['name'])
+        return NCodeGen.generateLabelsHeader(page)
+
     def convertFonts(self, fonts, verbose):
         """ converting all parset fonts to NGL_Font objects """
-        return [ self._convertFont(font, verbose) for font in fonts ]
+        return [self._convertFont(font, verbose) for font in fonts]
 
     def _convertFont(self, font, verbose):
         # charters set to converting
-        chars_sets = ''.join([ chr(x) for x in range(ord(' '), ord('~')) ])
+        char_range = range(ord(' '), ord('~'))
+        chars_sets = ''.join([chr(x) for x in char_range])
 
         # converting to ngl_font
         if verbose:
-            inform( 'converting font %s, %spt, bold=%s' % ( font['family'],
-                                                  font['pointsize'], font['bold'] ) )
-        ngl_font = NFontConverter.convertParsedQFont( chars_sets, font )
-        
-        return ngl_font
+            inform( 'converting font %s, %spt, bold %s' % (font.family(),
+                                                           font.pointSize(),
+                                                           font.bold()))
+        name = NGL_Font.formatName(font.family(),
+                                   font.pointSize(),
+                                   font.bold())
+        # convert and return
+        return NFontConverter.convertQFont( chars_sets, name, font )
 
     def fontsHeaderCode(self, fonts, verbose):
         if verbose:
@@ -60,45 +65,57 @@ class NUIC(object):
         return NFontCodeGen.generateFontsHeader( fonts )
 
     def convertBitmaps(self, bitmaps, compress, verbose):
-        """ converting all parset bitmaps to NGL_Bitmap objects """        
-        return [ self._convertBitmap(bmp, compress, verbose) for bmp in bitmaps ]
-    
-    def _convertBitmap(self, bitmap, compress, verbose):
-        if os.path.exists( bitmap['path'] ):
-            ngl_bitmap = NBitmapsConverter.convertParsedBitmap( bitmap, 'format16', compress )
-            
-            if verbose:
-                inform( ( 'converting bitmap {name}, size {width}x{height}, '
-                          'compress {compress}, data len {size} bytes'
-                         ).format(  name = bitmap['name'],
-                                    width = bitmap['width'],
-                                    height = bitmap['height'],
-                                    compress = compress,
-                                    size = ngl_bitmap.data_len_in_bytes ))
-        else:
-            error( ( 'File "{0}" not found! Expected path - "{1}" not exist'
-                     ' :( :( :( ' ).format( bitmap['name'], bitmap['path'] ))              
+        """ converting all parset bitmaps to NGL_Bitmap objects """
+        return [self._convertBitmap(bmp, compress, verbose) for bmp in bitmaps]
 
-        return ngl_bitmap
+    def _convertBitmap(self, path, compress, verbose):
+        if os.path.exists(path):
+
+            image = QImage(path)
+            name = os.path.basename(path).split('.')[0]
+
+            ngl_bitmap = NBitmapsConverter.convertQImage(image,
+                                                         name,
+                                                         'format16',
+                                                         compress)
+            if verbose:
+                inform(('converting bitmap {name}, size {width}x{height}, '
+                        'compress {compress}, data len {size} bytes'
+                        ).format(name = name,
+                                 width = image.size().width(),
+                                 height = image.size().height(),
+                                 compress = ngl_bitmap.compressed,
+                                 size = ngl_bitmap.data_len_in_bytes))
+            return ngl_bitmap
+
+        else:
+            error(('File "{0}" not found! Expected path - "{1}" not exist'
+                   ' :( :( :( ').format(bitmap['name'], bitmap['path']))
 
     def bitmapsHeaderCode(self, bitmaps, verbose ):
         if verbose:
-            inform( 'generate bitmaps header file...' )
-        return NBitmapCodeGen.generateBitmapsHeader( bitmaps )
+            inform('generate bitmaps header file...')
+        return NBitmapCodeGen.generateBitmapsHeader(bitmaps)
 
     def informUser(self, state, verbose):
         if state == 'parse_end':
-            if verbose:                
-                inform( 'ui file version - %s' %  self.parser.uiVersion() )
-                inform( 'page - "%s"' % self.parser.parsedPage()['name'] )
+            if verbose:
+                inform('ui file version - %s' %  self.parser.uiVersion())
+                inform('page - "%s"' % self.parser.parsedPage()['name'])
 
-                objects = self.parser.parsedObjects()                
-                objects_names = ', '.join( [obj['name'] for obj in objects] ) 
-                inform( 'objects - %s' % objects_names )
+                objects_classes = self.parser.getParsedObjects()
+                objects = []
 
-                bitmaps, fonts = self.parser.parsedResourses()                
-                bitmaps_paths = [ os.path.basename(bmp['path']) for bmp in bitmaps ]
-                fonts_familys = [font['name'] for font in fonts]
+                for class_key in objects_classes.keys():
+                    # iterate objects in this objects class
+                    for obj_key in objects_classes[class_key]:
+                        objects.append(obj_key)
+
+                inform( 'objects - %s' % ', '.join(objects) )
+
+                bitmaps, fonts = self.parser.getParsedResourses()
+                bitmaps_paths = [bmp for bmp in bitmaps]
+                fonts_familys = [font for font in fonts]
                 inform( 'bitmaps files - %s' % bitmaps_paths )
                 inform( 'fonts - %s' % fonts_familys )
 
@@ -108,12 +125,12 @@ class NUIC(object):
             if verbose:
                pass
             inform('--- Converting and generate successful, create dirs...')
-        
+
         elif state == 'create_dirs':
-            if verbose:            
+            if verbose:
                 for _dir in self.dirs.keys():
                     path = os.path.abspath( self.dirs[ _dir ] )
-                    inform( 'created [ %s ] dir - %s' % (_dir, path) ) 
+                    inform( 'created [ %s ] dir - %s' % (_dir, path) )
             inform('--- Creating dirs done, save...')
 
         if verbose:
@@ -131,34 +148,34 @@ class NUIC(object):
 
         # create dirs
         for _dir in dirs.keys():
-            os.makedirs( dirs[_dir], mode=0x777, exist_ok=True )    
+            os.makedirs( dirs[_dir], mode=0x777, exist_ok=True )
 
         self.dirs = dirs
         return self.dirs
 
-    def save(self, **kwargs):        
+    def save(self, **kwargs):
         # save page code
         self.saveCode(  dircode = 'page',
                         name = kwargs['pagename'] + '.c',
                         code = kwargs['pagecode'],
                         verbose = kwargs['verbose'] )
-        
+
         # save common buttons header code
         self.saveCode(  dircode = 'buttons',
                         name = kwargs['pagename'] + '_buttons.h',
                         code = kwargs['buttonscode'],
                         verbose = kwargs['verbose'] )
-        
+
         # save common labels header code
         self.saveCode(  dircode = 'labels',
                         name = kwargs['pagename'] + '_labels.h',
                         code = kwargs['labelscode'],
                         verbose = kwargs['verbose'] )
-        
+
         # save all fonts codes
         self.saveResources( kwargs['fonts'], 'fonts', kwargs['verbose'] )
-        
-        # save common fonts header code 
+
+        # save common fonts header code
         self.saveCode(  dircode = 'fonts',
                         name = 'fonts.h',
                         code = kwargs['fontsheader'],
@@ -166,8 +183,8 @@ class NUIC(object):
 
         # save all bitmaps header code
         self.saveResources( kwargs['bitmaps'], 'bitmaps', kwargs['verbose'] )
-        
-        # save common bitmaps header code 
+
+        # save common bitmaps header code
         self.saveCode(  dircode ='bitmaps',
                         name = 'bitmaps.h',
                         code = kwargs['bitmapsheader'],
@@ -178,12 +195,12 @@ class NUIC(object):
         _dir = self.dirs[ kwargs['dircode'] ]
         _basename = ( kwargs['name'] ).lower()
         _code = kwargs['code']
-        _file = os.path.abspath( os.path.join( _dir , _basename ) )        
-        
+        _file = os.path.abspath( os.path.join( _dir , _basename ) )
+
         self._write( _file, 'w', _code )
         if kwargs['verbose']:
             inform( 'saved [ %s ], path -- %s' % ( _basename, _file ) )
- 
+
     def saveResources(self, objects, dir_name, verbose):
         for obj in objects:
             _file = os.path.abspath( os.path.join( self.dirs[dir_name], obj.name + '.c' ) )
@@ -212,7 +229,7 @@ def createArgParser():
 
     parser.add_argument ( '-u', '--uiqt', dest = 'qt_uifile', type = str,
                             default = '',
-                            metavar = 'U',                            
+                            metavar = 'U',
                             help = 'input QtDesigner ui file' )
 
     parser.add_argument ( '-d', '--outdir', dest = 'ngl_out_dir', type = str,
@@ -224,8 +241,14 @@ def createArgParser():
     parser.add_argument( '--bitmap-compress', dest = 'bitmap_compress', type = str,
                             default = 'None',
                             metavar = 'C',
-                            help = ( 'compress for bitmaps, available options '
-                                     '{ None, RLE, JPG } [default: \'None\']' ) )
+                            help = ( 'compress for bitmaps, available options - '
+                                     '{ None, RLE, JPG, Auto(min size) } [default: \'None\']' ) )
+
+    parser.add_argument( '--bitmap-jpeg', dest = 'bitmap_jpeg_quality', type = int,
+                            default = 100,
+                            metavar = 'Q',
+                            help = ( 'bitmaps JPG compression quality, available 0 - 100 '
+                                     '[default: 100]' ) )
 
     parser.add_argument( '-v', '--verbose', action='store_true', default = False,
                             help = ( 'increase output verbosity '
@@ -240,33 +263,37 @@ def main():
     parser = createArgParser()
     args = parser.parse_args()
 
-    # if no args print help and exit
-    if not len(sys.argv[1:]):
-        parser.print_help()
-        error('No arguments found :( exit...')
-    
-    if not os.path.exists( args.qt_uifile ):
-        # args.qt_uifile = 'untitled.ui'        
-        error( 'Qt ui file path not correct :( exit... ' )
-    
+    # # if no args print help and exit
+    # if not len(sys.argv[1:]):
+    #     parser.print_help()
+    #     error('No arguments found :( exit...')
+
+    # if not os.path.exists( args.qt_uifile ):
+    #     error( 'Qt ui file path not correct :( exit... ' )
+
+    args.qt_uifile = 'untitled.ui'
+    args.verbose = True
+
+    app = QApplication(sys.argv)
+
     uifile = args.qt_uifile
     outdir = args.ngl_out_dir
     verbose = args.verbose
-    bitmap_compress = args.bitmap_compress
+    bitmap_compress = ( args.bitmap_compress, args.bitmap_jpeg_quality )
 
     # create nuic object and parse Qt ui file
-    nuic = NUIC( uifile )       
-    ppage, pbitmaps, pfonts = nuic.parser.parse()   
+    nuic = NUIC( uifile )
+    ppage = nuic.parser.parse()
     nuic.informUser( 'parse_end', verbose )
-    
+
     # convert all fonts, generate common fonts header code
-    ngl_fonts = nuic.convertFonts( pfonts, verbose )
-    ngl_fonts_header = nuic.fontsHeaderCode( pfonts, verbose )    
-    
+    ngl_fonts = nuic.convertFonts( ppage['fonts'], verbose )
+    ngl_fonts_header = nuic.fontsHeaderCode( ngl_fonts, verbose )
+
     # convert all bitmaps, generate common bitmaps header code
-    ngl_bitmaps = nuic.convertBitmaps( pbitmaps, bitmap_compress, verbose )
-    ngl_bitmaps_header = nuic.bitmapsHeaderCode( pbitmaps, verbose )
-    
+    ngl_bitmaps = nuic.convertBitmaps( ppage['bitmaps'], bitmap_compress, verbose )
+    ngl_bitmaps_header = nuic.bitmapsHeaderCode( ngl_bitmaps, verbose )
+
     # generate page and objects code
     pagecode = nuic.pageCode( ppage, verbose )
     buttonscode = nuic.buttonsCode( ppage, verbose )
@@ -274,7 +301,7 @@ def main():
 
     # inform by end of conversion and generation code
     nuic.informUser( 'convert_end', verbose )
-    
+
     # create dirs for save generated code
     code_dirs = nuic.createDirs( basepath=outdir, pagename=ppage['name'] )
     nuic.informUser('create_dirs', verbose)
@@ -288,9 +315,10 @@ def main():
                 bitmapsheader = ngl_bitmaps_header,
                 fonts = ngl_fonts,
                 fontsheader = ngl_fonts_header,
-                verbose = verbose )  
+                verbose = verbose )
 
-    # final !    
+    # final !
+    app.exit()
     inform( '-*-*- All works finish! :) --- out code locate in %s' % os.path.abspath(code_dirs['base']) )
 
 # ------------------------------------------------------------------------------
@@ -298,4 +326,4 @@ def main():
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
     sys.exit(main())
-    
+

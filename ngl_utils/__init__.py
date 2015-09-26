@@ -3,3 +3,4 @@
 import ngl_utils.messages
 import ngl_utils.ncodegenerator
 import ngl_utils.uiparser
+import ngl_utils.nplugins

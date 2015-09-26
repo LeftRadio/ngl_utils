@@ -20,6 +20,9 @@ from ngl_utils.nfont.cparser import NFontParser
 from ngl_utils.ncodegenerator import NFontCodeGen
 from ngl_utils.messages import inform, error, newline
 
+from ngl_fillbar import NGL_FillBar
+from ngl_button import NGL_Button
+
 # ------------------------------------------------------------------------------
 # PixelDelegate
 # ------------------------------------------------------------------------------
@@ -75,7 +78,7 @@ class ImageModel(QAbstractTableModel):
 
     def setImage(self, image):
         self.beginResetModel()
-        self.modelImage = image        
+        self.modelImage = image
         self.endResetModel()
 
     def getChar(self):
@@ -337,7 +340,7 @@ class BitmapManipulator(object):
         new_bmp.fill(0)
 
         if direction not in [ 'left', 'right', 'up', 'down' ]:
-            error('direction for shift char not valid, exit.' )            
+            error('direction for shift char not valid, exit.' )
 
         for y in range( bitmap.height() ):
             for x in range( bitmap.width() ):
@@ -352,7 +355,7 @@ class BitmapManipulator(object):
                     new_bmp.setPixel( x, y - 1, col)
                 elif direction == 'down' and y < bitmap.height() - 1:
                     new_bmp.setPixel( x, y + 1, col )
-        return new_bmp 
+        return new_bmp
 
 # ------------------------------------------------------------------------------
 # NFontEditWidget
@@ -372,7 +375,27 @@ class NFontEditWidget(QWidget):
 
         # load main ui window
         uifile = pkg_resources.resource_filename( 'ngl_utils.nfont', 'qtres/ngl_font_edit.ui' )
+        # uifile = 'untitled.ui'
         self.uic = uic.loadUi(uifile, self)
+        # uic_objects = self.__dict__
+        # objects = [uic_objects[w] for w in uic_objects.keys() if 'NGL' in uic_objects[w].__class__.__name__]
+        # pobj = [{w: uic_objects[w]} for w in uic_objects.keys() if 'NGL' in uic_objects[w].__class__.__name__]
+        # print('objects:', pobj)
+
+        # ngl_obj = {}
+        # for obj in objects:
+        #     print('name : ', obj.__class__.__name__)
+        #     if obj.__class__.__name__ == 'NGL_Button':
+        #         fill_prop = [w for w in NGL_Button.__dict__.keys() if type(NGL_Button.__dict__[w]) == pyqtProperty]
+        #         for prop in fill_prop:
+        #             val = getattr(obj, prop)
+        #             ngl_obj[prop] = val
+        #             print(type(val), prop, val)
+        #         print(getattr(obj, 'styleSheet')())
+
+        # print('ngl_obj:', ngl_obj)
+
+        # sys.exit(True)
 
         # ngl font char set widget
         self.characterWidget = CharactersMapWidget()
@@ -387,7 +410,7 @@ class NFontEditWidget(QWidget):
         self.uic.pixelSizeSpinBox.setValue( PixelDelegate.defaultPixelSize )
         self.uic.pixelSizeSpinBox.valueChanged.connect( self.charPixelView.viewDelegate.setPixelSize )
         self.uic.pixelSizeSpinBox.valueChanged.connect( self.charPixelView.updateView )
-       
+
         # char bitmap X add/remove
         self.uic.btnAddLeft.clicked.connect( self._charAddRemoveX )
         self.uic.btnRemoveLeft.clicked.connect( self._charAddRemoveX )
@@ -414,13 +437,13 @@ class NFontEditWidget(QWidget):
         self.setWindowModality(Qt.ApplicationModal)
 
     def _selectChar(self, char, bitmap):
-        
+
         if self.ngl_font != None:
-            
+
             chardict = self.ngl_font.get_chars_dict()
 
             if char in chardict.keys():
-                
+
                 self._select_char = char
                 self.charPixelView.openImage( char, bitmap)
 
@@ -441,18 +464,18 @@ class NFontEditWidget(QWidget):
         selectchar = self.ngl_font.get_chars_dict() [ self._select_char ]
 
         if name == 'btnAddLeft' or name == 'btnAddRight':
-            
+
             manipulate = BitmapManipulator.addX
             direction = name[ len('btnAdd'): ].lower()
 
         elif name == 'btnRemoveLeft' or name == 'btnRemoveRight':
-            
+
             manipulate = BitmapManipulator.removeX
             direction = name[ len('btnRemove'): ].lower()
 
-        if self.uic.chBoxAllChars.checkState():            
-            charlist = self.ngl_font.get_chars_list()        
-        else:        
+        if self.uic.chBoxAllChars.checkState():
+            charlist = self.ngl_font.get_chars_list()
+        else:
             charlist = [ selectchar ]
 
         for char in charlist:
@@ -482,7 +505,7 @@ class NFontEditWidget(QWidget):
 
     @pyqtSlot()
     def _charShiftXY(self):
-        
+
         name = self.sender().objectName()
         selectchar = self.ngl_font.get_chars_dict() [ self._select_char ]
         direction = name[ len('btnShift'): ].lower()
@@ -496,10 +519,10 @@ class NFontEditWidget(QWidget):
             char[ 'bitmap' ] = BitmapManipulator.shift( char[ 'bitmap' ], direction )
 
         self._selectChar( selectchar[ 'char' ], selectchar[ 'bitmap' ] )
-    
+
     @pyqtSlot()
     def openFile(self):
-        
+
         last_dir = self.settings.value('open_last_dir', type=str)
         if not last_dir:
             last_dir = './'
@@ -508,14 +531,14 @@ class NFontEditWidget(QWidget):
                                 "Open NGL Font source for edit", last_dir,
                                 "Source ngl font Files (*.c);;All Files (*)",
                                 options = QFileDialog.DontUseNativeDialog )
-        if fileName:            
+        if fileName:
             self.setFontFile( fileName )
             self.selectCharacter( self._select_char )
         else:
             error('File name incorect, exit.')
 
     def setFontFile(self, filepath):
-        
+
         if filepath:
             self.filepath = filepath
             self.settings.setValue( 'open_last_dir', os.path.dirname(filepath) )
@@ -526,11 +549,11 @@ class NFontEditWidget(QWidget):
             self._openNGLFont( ngl_font )
 
     def _openNGLFont(self, font):
-            
-        self.ngl_font = font        
+
+        self.ngl_font = font
         font_charlist = self.ngl_font.get_chars_list()
         charset = ''.join( [ ch['char'] for ch in font_charlist ] )
-        
+
         self.characterWidget.setCharSet( charset )
         self.setWindowTitle( "Character Map for - '%s'" % font.name )
 
@@ -538,24 +561,24 @@ class NFontEditWidget(QWidget):
         # regenerate  'code' and 'offset' fo chars
         offset = 0
         for ch in self.ngl_font.get_chars_list():
-            ch['code'], _offset = NFontConverter.font_bmpCode( ch['bitmap'] )
+            ch['code'], _offset = NFontConverter.font_bmpCode(ch['bitmap'])
             ch['offset'] = offset
             offset += _offset
 
-        # generate code for font, return result font      
-        self.ngl_font.code = NFontCodeGen.font( self.ngl_font )        
+        # generate code for font, return result font
+        self.ngl_font.code = NFontCodeGen.font( self.ngl_font )
         return self.ngl_font
 
-    def closeEvent(self, event):        
+    def closeEvent(self, event):
         if self.arg == '__main__':
-            sys.exit( True )
+            sys.exit(True)
 
-    def hideEvent(self, event):        
-        super(NFontEditWidget, self).hideEvent( event )
-        
+    def hideEvent(self, event):
+        super(NFontEditWidget, self).hideEvent(event)
+
         self.ngl_font = None
-        self.characterWidget.setCharSet( None )
-        self.charPixelView.openImage( None, None )
+        self.characterWidget.setCharSet(None)
+        self.charPixelView.openImage(None, None)
 
         if self.arg == '__main__':
             self.close()
@@ -592,11 +615,11 @@ class NFontEditWidget(QWidget):
 # ------------------------------------------------------------------------------
 # NFontConverterWidget
 # ------------------------------------------------------------------------------
-def nfontEditGUIStart():    
+def nfontEditGUIStart():
     app = QApplication(sys.argv)
     ex = NFontEditWidget('__main__')
     QApplication.setStyle(QStyleFactory.create('Fusion'))
-    ex.openFile()    
+    ex.openFile()
     ex.show()
     sys.exit(app.exec_())
 
@@ -605,4 +628,3 @@ def nfontEditGUIStart():
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
     nfontEditGUIStart()
-    

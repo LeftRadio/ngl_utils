@@ -1,206 +1,156 @@
 #!/usr/bin/env python3
 
-import sys
-import glob
 import os
 import xml.etree.ElementTree as ET
-from ngl_utils.nfont.nfont import NGL_Font
+from PyQt5 import uic
+from PyQt5.QtCore import Qt
 from ngl_utils.nbitmap.converter import NColor
+from ngl_utils.nplugins.widgets.qstyle_parser import QStyleParser
 
-# ------------------------------------------------------------------------------
-# simple parser for Qt ui files
-# ------------------------------------------------------------------------------
+
 class UIParser(object):
-    """ docstring for UIParser """
+    """ simple parser for Qt ui files """
     def __init__(self, uifile):
         super(UIParser, self).__init__()
-        self.uifile = uifile
-    
-    def set_uifile(self, uifile):
         self._uifile = uifile
-    def get_uifile(self):
+
+    @property
+    def uifile(self):
         return self._uifile
 
-    property = (set_uifile, get_uifile)
-
+    @uifile.setter
+    def uifile(self, uifile):
+        self._uifile = uifile
 
     def uiVersion(self):
         try:
             root = self.getroot(self.uifile)
-            ver = str( root.attrib['version'] )
+            ver = str(root.attrib['version'])
         except:
             ver = 'undefined... :( '
         return ver
 
     def getroot(self, xmlfile):
         """ get root for xml file """
-        return ET.parse( xmlfile ).getroot()
+        return ET.parse(xmlfile).getroot()
 
     def parse(self):
-        """"""                
-        # get page and objects    
-        page = self.getroot( self.uifile ).find('widget')
-        objects = [ obj for obj in page.findall('widget') ]
+        """
+        """
+        # load ui file provide pyqt uic module
+        self.uic = uic.loadUi(self.uifile,
+                              package='ngl_utils.nplugins.widgets')
 
         # parse ngl page
-        self.parsed_page = self._parsePage( page, ['geometry', 'styleSheet'] )
+        self.ppage = self._parsePage(self.uic)
 
-        # parse QLines
-        properties = [ 'geometry', 'orientation', 'styleSheet']
-        self.parsed_page['lines'] = self._parseObjects( objects, 'Line', properties )
-        
-        # parse QLabels
-        properties = ['geometry', 'orientation', 'styleSheet', 'font', 'text']
-        self.parsed_page['labels'] = self._parseObjects( objects, 'QLabel', properties )
-        
-        # parse QtoolButtons
-        properties = ['geometry', 'styleSheet', 'font', 'icon', 'iconSize']
-        self.parsed_page['buttons'] = self._parseObjects( objects, 'QToolButton', properties )
-        
-        # collect all fonts and bitmaps in project objects
-        self.parsed_fonts = self._parseResources('font')
-        self.parsed_bitmaps = self._parseResources('bitmap')
+        # parse ngl page object
+        self.ppage['objects'] = self._parseObjects(self.uic)
 
-        return ( self.parsed_page, self.parsed_bitmaps, self.parsed_fonts)
-    
+        # # collect all fonts and bitmaps in project objects
+        self.ppage['fonts'] = self._collectResource('font',
+                                                    self.ppage['objects'])
+        self.ppage['bitmaps'] = self._parseBitmaps('icon', self.uifile)
+
+        return self.ppage
+
     def parsedPage(self):
         """ return parsed page """
-        return self.parsed_page
+        return self.ppage
 
-    def parsedObjects(self):
+    def getParsedObjects(self):
         """ return all parsed objects in page """
-        return ( self.parsed_page['lines'] + \
-                 self.parsed_page['labels'] + \
-                 self.parsed_page['buttons'] )
+        return self.ppage['objects']
 
-    def parsedResourses(self):
+    def getParsedResourses(self):
         """ return parsed bitmaps and font """
-        return ( self.parsed_bitmaps, self.parsed_fonts )
-    
-    def _parseResources(self, name):
-        out_objects = []        
-        
-        for obj in self.parsedObjects():
-            if name in obj and obj[ name ] not in out_objects:
-                out_objects.append( obj[ name ] )
-        
-        return out_objects
+        return (self.ppage['bitmaps'], self.ppage['fonts'])
 
-    def _parsePage(self, page, propertySet):
-        parsed_page = { 'class': 'NGL_Page', 'name': page.attrib['name'] }
-        self._parseProperties( page, parsed_page, propertySet )
-        return parsed_page
+    def _collectResource(self, name, objects):
+        # collect all resources
+        resources = []
+        for class_key in objects.keys():
+            # iterate objects in this objects class
+            for obj_key in objects[class_key]:
+                # iterate properties
+                obj = objects[class_key][obj_key]
 
-    def _initParsedObject(self, className, obj_name):
-        return { 'class': 'NGL_' + className,
-                 'name': obj_name,
-                 'click': obj_name + '_click' }
+                # if nedeed resource in object
+                if name in dir(obj):
+                    attr = getattr(obj, name)
+                    # if resource not method
+                    if attr.__class__.__name__ not in 'builtin_function_or_method':
+                        # if not duplicate resources
+                        if attr not in resources:
+                            resources.append(attr)
 
-    def _parseObjects(self, QObjects, className, propertySet):
-        ngl_objects = []
+        return resources
 
-        for obj in QObjects:
-            if obj.attrib['class'] == className:
+    def _parseBitmaps(self, name, uifile):
+        root = self.getroot(uifile)
+        paths = []
+        bitmaps = {}
 
-                ngl_obj = self._initParsedObject( className, obj.attrib['name'] )
-                self._parseProperties( obj, ngl_obj, propertySet )
+        for p in root.iter('property'):
 
-                if 'font' not in ngl_obj:               
-                    ngl_obj['font'] = {}
-                    ngl_obj['font']['family'] = 'MS Shell Dlg 2'
-                    ngl_obj['font']['pointsize'] = '8'
-                    ngl_obj['font']['bold'] = False
-                
-                ngl_obj['font']['name'] = NGL_Font.formatName( ngl_obj['font']['family'],
-                                                               ngl_obj['font']['pointsize'],
-                                                               ngl_obj['font']['bold'] )
-                ngl_objects.append( ngl_obj )
+            if p.attrib['name'] == 'icon':
+                path = p.find('iconset').find('normaloff').text
+                path = os.path.abspath(path)
 
-        return ngl_objects
+                if path not in paths:
+                    paths.append(path)
 
-    def _parseProperties(self, obj, ngl_obj, out_properties):
-        namesParse = {
-            'geometry': self._geometry,
-            'orientation': self._orientation,
-            'styleSheet': self._stylesheet,
-            'font': self._font,
-            'icon': self._bitmap,
-            'iconSize': self._bitmap_size,
-            'text': self._text
+        for path in paths:
+            bitmaps[path] = []
+
+            main = root.find('widget')
+            for w in main.findall('widget'):
+                for p in w.findall('property'):
+                    if p.attrib['name'] == 'icon':
+                        bitmaps[path].append(w.attrib['name'])
+
+        return bitmaps
+
+    def _parsePage(self, uic_page):
+        page = {
+            'class': 'NGL_Page',
+            'name': uic_page.objectName(),
+            'width': uic_page.size().width(),
+            'height': uic_page.size().height()}
+
+        color = QStyleParser.getColor(uic_page.styleSheet(),
+                                      'background-color: rgb')
+        if color is None:
+            color = Qt.black
+
+        page['background_color'] = NColor.fromQColor(color)
+
+        return page
+
+    def _parseObjects(self, page):
+        # get page dictionary objects
+        pdict = page.__dict__
+
+        # filter NGL objects
+        qobjects = [pdict[w] for w in pdict.keys() if 'NGL' in pdict[w].__class__.__name__]
+
+        # create out objects dictionary
+        out_objects = {
+            'NGL_Line': {},
+            'NGL_Rect': {},
+            'NGL_Bitmap': {},
+            'NGL_Button': {}
         }
-        for prop in obj.findall('property'):
-            if prop.attrib['name'] in out_properties:
-                namesParse[ prop.attrib['name'] ](ngl_obj, prop)
 
-    def _geometry(self, obj, prop):
-        rect = prop.find('rect')
-        obj['x'] = rect.find('x').text
-        obj['y'] = rect.find('y').text
-        obj['width'] = rect.find('width').text
-        obj['height'] = rect.find('height').text
+        # parse all objects
+        for qobj in qobjects:
+            name = qobj.__class__.__name__
 
-    def _orientation(self, obj, prop):
-        """ Parse orientation property for object """
-        obj['orientation'] = prop.find('enum').text[4:]
+            # create dict key if object class type not in out_objects
+            if name not in out_objects:
+                out_objects[name] = {}
 
-    def _convertColor(self, color_str):
-        try:
-            i0 = color_str.index('(') + 1
-            i1 = color_str.index(')')
-            _rgb = [ int(val.strip()) for val in color_str[i0:i1].split(',', 3) ]
-        except:
-            _rgb = [ 0, 0, 0 ]
+            # get object name and use name as tag, store object
+            out_objects[name][qobj.objectName()] = qobj
 
-        return NColor.fromRGB( _rgb )
-
-    def _stylesheet(self, obj, prop):
-        colorLines = prop.find('string').text.split('\n')
-        for line in colorLines:
-            name = line[ :line.index(':') ].replace('-', '_')
-            obj[ name ] = self._convertColor( line )
-
-    def _font(self, obj, prop):
-        prop = prop.find('font')
-        obj['font'] = self._fontProperties(prop)        
-
-    def _fontProperties(self, prop):
-        font = {}
-
-        family = prop.find('family')
-        if family != None:
-            font['family'] = family.text
-        else:
-            font['family'] = 'MS Shell Dlg 2'
-
-        pointsize = prop.find('pointsize')
-        if pointsize != None:
-            font['pointsize'] = pointsize.text
-        else:
-            font['pointsize'] = '8'
-
-        bold = prop.find('bold')
-        if bold == 'true':
-            font['bold'] = True
-        else:
-            font['bold'] = False
-
-        return font
-
-    def _bitmap(self, obj, prop):
-        p = prop.find('iconset')
-        obj['bitmap'] = {}
-        text = p.find('normalon').text.split('/', 2)
-        obj['bitmap']['prefix'] = text[1]
-        obj['bitmap']['path'] = os.path.abspath(text[2])
-        basename = os.path.basename( text[2] )
-        obj['bitmap']['name'] = os.path.splitext( basename )[0]
-
-    def _bitmap_size(self, obj, prop):
-        p = prop.find('size')
-        obj['bitmap']['width'] = p.find('width').text
-        obj['bitmap']['height'] = p.find('height').text
-
-    def _text(self, obj, prop):
-        if prop.find('string') != None:
-            obj['text'] = prop.find('string').text
-
+        return out_objects

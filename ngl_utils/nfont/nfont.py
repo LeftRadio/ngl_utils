@@ -34,7 +34,7 @@ class NGL_Font(object):
         return self._code
     def set_code(self, code):
         self._code = code
-        
+
     code = property( get_code, set_code )
 
     def code_size_calc(self):
@@ -54,6 +54,20 @@ class NGL_Font(object):
         name = '%s_%s_%s' % ( family, pointSize, b )
         return name.replace(' ', '_').lower()
 
+    @staticmethod
+    def formatPointerName(name):
+        """ format pointer to font data for C style """
+        return '(NGL_Font*)&{0}'.format(name)
+
+    @staticmethod
+    def formatQFontName(font):
+        """ """
+        fontName = NGL_Font.formatName( font.family(),
+                                        font.pointSize(),
+                                        font.bold())
+        fontPointerName = NGL_Font.formatPointerName(fontName)
+
+        return (fontName, fontPointerName)
 
     def getSystemFont(self):
         return self.sysFont

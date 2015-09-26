@@ -6,8 +6,8 @@ import os
 
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QFont, QFontMetrics, QImage, QPainter, QPen
-from PyQt5.QtWidgets import ( QWidget, QDesktopWidget,
-        QApplication, QStyleFactory )
+from PyQt5.QtWidgets import (QWidget, QDesktopWidget,
+        QApplication, QStyleFactory)
 
 from ngl_utils.nfont.nfont import NGL_Font
 from ngl_utils.ncodegenerator import NFontCodeGen
@@ -29,27 +29,18 @@ class NFontConverter(object):
         qfont = QFont( 'Tahoma', 8 )
         qfont.setBold( True )
         chars_to_convert = 'ABCD0123456789'
-        
+
         ngl_font = NFontConverter.convertQFont( chars_to_convert, qfont )
 
-    """    
+    """
     @staticmethod
     def convertParsedQFont(chars_sets, font):
         name = font['name']
         qfont = QFont( font['family'], int(font['pointsize']) )
         qfont.setBold( font['bold'] )
 
-        # if no QApp program crash in QFontMetrics( font ).boundingRect( char ) ???
-        app = QApplication([])
-
-        # convert
-        fnt = NFontConverter.convertQFont( chars_sets, name, qfont )
-
-        # close QApp
-        app.exit()
-        del(app)
-        
-        return fnt
+        # convert and return
+        return NFontConverter.convertQFont( chars_sets, name, qfont )
 
     @staticmethod
     def convertQFont(chars_sets, name, font):
@@ -161,4 +152,4 @@ class NFontConverter(object):
 
 
 
-    
+

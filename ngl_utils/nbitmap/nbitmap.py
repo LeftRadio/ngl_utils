@@ -16,7 +16,7 @@ class NGL_Bitmap(object):
         self.datatype = 'uint16_t'
         self.data = []
         self.code = ''
-    
+
     def get_name(self):
         return self._name
     def set_name(self, name):
@@ -33,7 +33,7 @@ class NGL_Bitmap(object):
         self._height = height
 
     def get_compressed(self):
-        return self._compressed.replace('None', '0').replace('RLE', '1').replace('JPG', '2')
+        return self._compressed #.replace('None', '0').replace('RLE', '1').replace('JPG', '2')
     def set_compressed(self, compressed):
         self._compressed = compressed
 
@@ -55,10 +55,10 @@ class NGL_Bitmap(object):
     def get_datatype(self):
         return self._datatype
     def set_datatype(self, datatype):
-        self._datatype = datatype    
-    
-    def get_data(self):        
-        return self._data        
+        self._datatype = datatype
+
+    def get_data(self):
+        return self._data
     def set_data(self, data):
         self._data = data
 
@@ -70,7 +70,7 @@ class NGL_Bitmap(object):
     name = property( get_name, set_name )
     width = property( get_width, set_width )
     height = property( get_height, set_height )
-    compressed = property( get_compressed, set_compressed )    
+    compressed = property( get_compressed, set_compressed )
     color_bit = property( get_color_bit, set_color_bit )
     data_word_size = property( get_data_word_size, set_data_word_size )
     data_len_bytes = property( get_data_len_bytes, set_data_len_bytes )
@@ -84,11 +84,11 @@ class NGL_Bitmap(object):
         tstr = '\t'
         data = self.data
         format_data = []
-        
+
         for word in data:
             tstr += '0x%04x, ' % word
-            crop += 1            
-            if crop >= 20:                
+            crop += 1
+            if crop >= 20:
                 format_data.append( tstr + '\n' )
                 tstr = '\t'
                 crop = 0
