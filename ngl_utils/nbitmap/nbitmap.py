@@ -86,12 +86,15 @@ class NGL_Bitmap(object):
         format_data = []
 
         for word in data:
-            tstr += '0x%04x, ' % word
+            tstr += '0x%x, ' % word
             crop += 1
-            if crop >= 20:
+            if crop >= self.width:
                 format_data.append( tstr + '\n' )
                 tstr = '\t'
                 crop = 0
+
+        if crop != 0:
+            format_data.append( tstr + '\n' )
 
         return ''.join( format_data )
 

@@ -1,0 +1,11 @@
+/* {pageName} {itemName} item */
+NGL_SeekBar {itemName} = {{
+    {x0}, {y0}, {x1}, {y1},     // coordinates
+    {old_posX}, {old_posY},     // old slider positions
+    {VertHoriz},                // orientation
+    {Level_MIN}, {Level_MAX},   // min/max levels
+    {Level},                    // level
+    {ShowProgress},             // show progress level
+    {Color},                    // main seekbar color
+    {SliderColor}               // slider color
+}};

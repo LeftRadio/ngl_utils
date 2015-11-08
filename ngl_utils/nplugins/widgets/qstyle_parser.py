@@ -17,7 +17,7 @@ class QStyleParser(object):
                 r, g, b = line[start:end].replace(' ', '').split(',')
                 return QColor( int(r), int(g), int(b) )
 
-        return None
+        return QColor(0, 0, 0)
 
     @staticmethod
     def getColorStyleSheet(qcolor, name):

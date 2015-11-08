@@ -6,7 +6,7 @@ print(find_packages())
 
 setup(
     name                    = 'ngl_utils',
-    version                 = '1.3.3',
+    version                 = '1.4.9',
     author                  = 'Vladislav Kamenev',
     author_email            = 'wladkam@mail.com',
     url                     = 'https://github.com/LeftRadio/ngl_utils',
@@ -22,7 +22,8 @@ nglfed - ui ngl font editor util
 """ ),
     download_url            = 'https://github.com/LeftRadio/ngl_utils',
     package_data            = { 'ngl_utils': ['templates/*.ntp'],
-                                'ngl_utils.nfont': ['qtres/*.ui'] },
+                                'ngl_utils.nfont': ['qtres/*.ui'],
+                                'ngl_utils.nplugins.python': ['ico/*.ico'] },
     packages                = find_packages(),
 
     entry_points  = { 'console_scripts':

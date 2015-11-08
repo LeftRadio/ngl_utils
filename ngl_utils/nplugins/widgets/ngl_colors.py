@@ -32,6 +32,14 @@ class NGL_Colors(object):
         0xffff,  0xce59,  0xce59,  0xb5b6,  0xb5b6,  0x2945,  0x2945 ]
 
     @staticmethod
+    def getRGB(ngl_color):
+        r = (ngl_color & 0xF800) << 8
+        g = (ngl_color & 0x07E0) << 5
+        b = (ngl_color & 0x001F) << 3
+
+        return (r, g, b)
+
+    @staticmethod
     def getColor(index):
         if index > 255:
             index = 255
@@ -44,3 +52,29 @@ class NGL_Colors(object):
         b = (color & 0x1F) << 3
 
         return r | g | b
+
+    @staticmethod
+    def fromARGB(argb_data):
+        """ convert 8888_ARGB to 565_RGB """
+
+        R = ((argb_data & 0xF80000) >> 8)
+        G = ((argb_data & 0xFC00) >> 5)
+        B = (argb_data & 0xF8) >> 3
+
+        return (R | G | B)
+
+    @staticmethod
+    def fromRGB(rgb):
+        """ convert 888_RGB to 565_RGB """
+        R = (rgb[0] & 0x1F) << 11
+        G = (rgb[1] & 0x3F) << 6
+        B = rgb[2] & 0x1F
+        return (R | G | B)
+
+    @staticmethod
+    def fromQColor(qcolor):
+        rgb = qcolor.rgb() & 0xFFFFFF
+        cdata = NGL_Colors.fromARGB(rgb)
+        return cdata
+
+

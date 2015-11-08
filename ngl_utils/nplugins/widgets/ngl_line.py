@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from ngl_utils.nplugins.widgets import NGL_Base
-from PyQt5.QtCore import pyqtProperty, pyqtSignal, QPoint, QLine, QSize
+from ngl_utils.nplugins.widgets.ngl_base import NGL_Base
+from PyQt5.QtCore import pyqtProperty, pyqtSignal, QPoint, QLine, QSize, QRect
 from PyQt5.QtGui import QPainter
 
 
@@ -18,14 +18,14 @@ class NGL_Line(NGL_Base):
         """ Constructor for ngl widget """
         super(NGL_Line, self).__init__(parent)
 
-        self._line = QLine(0, 0, 100, 0)
+        self._line = QLine(0, 0, 150, 150)
+        self._static = True
         self.update()
 
     def paintEvent(self, event):
         """ Paint ngl widget event """
         p = QPainter()
         p.begin(self)
-
         p.drawLine(self._line)
         p.end()
 
@@ -34,9 +34,8 @@ class NGL_Line(NGL_Base):
         return self._size()
 
     def _size(self):
-        width = (self._line.x2() - self._line.x1()) + 1
-        height = (self._line.y2() - self._line.y1()) + 1
-
+        width = abs(self._line.x2() - self._line.x1()) + 1
+        height = abs(self._line.y2() - self._line.y1()) + 1
         return QSize(width, height)
 
     def update(self):
@@ -51,9 +50,7 @@ class NGL_Line(NGL_Base):
         self.setMinimumSize(w, h)
         self.setMaximumSize(w, h)
 
-
-    # Provide getter and setter methods for the property.
-
+    # # Provide getter and setter methods for the property.
     @pyqtProperty(QPoint)
     def P1(self):
         return self._line.p1()
@@ -63,9 +60,7 @@ class NGL_Line(NGL_Base):
         self._line.setP1(point)
         self.update()
 
-
     # Provide getter and setter methods for the property.
-
     @pyqtProperty(QPoint)
     def P2(self):
         return self._line.p2()
@@ -75,19 +70,21 @@ class NGL_Line(NGL_Base):
         self._line.setP2(point)
         self.update()
 
-
-    def doNGLCode(self):
-        template = 'NGL_GP_DrawLine({x0}, {y0}, {x1}, {y1}, {color});\n'
+    def doNGLCode(self, **kwargs):
+        template = 'NGL_GP_DrawLine({x0}, {y0}, {x1}, {y1}, {color});'
 
         # convert coordinates
-        p1 = self._ngl_point(self.P1)
-        p2 = self._ngl_point(self.P2)
+        g = self._ngl_geometry()
 
-        return template.format( x0 = p1.x(),
-                                y0 = p1.y(),
-                                x1 = p2.x(),
-                                y1 = p2.y(),
-                                color = self._ngl_color('color: rgb') )
+        y1 = self._ngl_y(self.P1.y(), g.height() - 1)
+        y2 = self._ngl_y(self.P2.y(), g.height() - 1)
+
+        return template.format(
+            x0 = g.x(),
+            y0 = g.y() + y1,
+            x1 = g.x() + g.width() - 1,
+            y1 = g.y() + y2,
+            color = self._ngl_color('color: rgb'))
 
 
 # if run as main program
@@ -99,4 +96,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = NGL_Line()
     widget.show()
+    widget.doNGLCode()
     sys.exit(app.exec_())

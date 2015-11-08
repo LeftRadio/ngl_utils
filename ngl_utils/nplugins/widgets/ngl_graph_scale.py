@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-from ngl_utils.nplugins.widgets import NGL_Base
+from ngl_utils.nplugins.widgets.ngl_base import NGL_Base
+from ngl_utils.nplugins.widgets.qstyle_parser import QStyleParser
 
 from PyQt5.QtCore import pyqtProperty, pyqtSlot, QPoint, QSize, Qt
 from PyQt5.QtGui import QPainter, QFont, QFontMetrics, QPen
+from ngl_utils.nfont.nfont import NGL_Font
 
 
 class NGL_GraphScale(NGL_Base):
@@ -11,6 +13,9 @@ class NGL_GraphScale(NGL_Base):
     NGL_GraphScale(NGL_Base)
     Provides a embedded NGL library graphics scale widget.
     """
+
+    # order for NGL library page struct pointers order
+    ngl_order = 5
 
     def __init__(self, parent=None):
         """ Constructor for ngl widget """
@@ -37,7 +42,7 @@ class NGL_GraphScale(NGL_Base):
         fmr = QFontMetrics(self._font).boundingRect(self._units)
 
         if self._orientation == Qt.Horizontal:
-            w = fmr.width()+1
+            w = fmr.width()+2
             lenght = self.geometry().width() - w
         else:
             h = fmr.height()+1
@@ -103,15 +108,13 @@ class NGL_GraphScale(NGL_Base):
         painter.setFont(self._font)
 
         if self._orientation == Qt.Horizontal:
-            self._paintHorisontal(painter)
+            self._paintHorizontal(painter)
         else:
             self._paintVertical(painter)
 
-
-
         painter.end()
 
-    def _paintHorisontal(self, painter):
+    def _paintHorizontal(self, painter):
         """ Paint horizontal scale """
         if self._show_labels:
             fm = QFontMetrics(self._font)
@@ -246,162 +249,160 @@ class NGL_GraphScale(NGL_Base):
                       self.geometry().height() )
 
 
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getFont(self):
+    @pyqtProperty(QFont)
+    def font(self):
         return self._font
 
-    @pyqtSlot(QFont)
-    def setFont(self, font):
+    @font.setter
+    def font(self, font):
         self._font = font
         self.update()
 
-    Font = pyqtProperty(QFont, getFont, setFont)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getGradientText(self):
+    @pyqtProperty(bool)
+    def gradientText(self):
         return self._gradient_text
 
-    @pyqtSlot(bool)
-    def setGradientText(self, gradient):
+    @gradientText.setter
+    def gradientText(self, gradient):
         self._gradient_text = gradient
         self.update()
 
-    GradientText = pyqtProperty(bool, getGradientText, setGradientText)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getMax(self):
+    @pyqtProperty(int)
+    def maximum(self):
         return self._max
 
-    @pyqtSlot(int)
-    def setMax(self, val):
+    @maximum.setter
+    def maximum(self, val):
         self._max = val
         self.update()
 
-    Max = pyqtProperty(int, getMax, setMax)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getMin(self):
+    @pyqtProperty(int)
+    def minimum(self):
         return self._min
 
-    @pyqtSlot(int)
-    def setMin(self, val):
+    @minimum.setter
+    def minimum(self, val):
         self._min = val
         self.update()
 
-    Min = pyqtProperty(int, getMin, setMin)
-
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getScaleCent(self):
+    @pyqtProperty(int)
+    def scaleCent(self):
         return self._scale_cent
 
-    @pyqtSlot(int)
-    def setScaleCent(self, val):
+    @scaleCent.setter
+    def scaleCent(self, val):
         self._scale_cent = val
         self.update()
 
-    ScaleCent = pyqtProperty(int, getScaleCent, setScaleCent)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getLabels(self):
+    @pyqtProperty(str)
+    def labels(self):
         return self._labels
 
-    @pyqtSlot(str)
-    def setLabels(self, labels):
+    @labels.setter
+    def labels(self, labels):
         self._labels = labels
         self.update()
 
-    Labels = pyqtProperty(str, getLabels, setLabels)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getUnits(self):
+    @pyqtProperty(str)
+    def units(self):
         return self._units
 
-    @pyqtSlot(str)
-    def setUnits(self, units):
+    @units.setter
+    def units(self, units):
         self._units = units
         self.update()
 
-    Units = pyqtProperty(str, getUnits, setUnits)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getShowLabels(self):
+    @pyqtProperty(bool)
+    def showLabels(self):
         return self._show_labels
 
-    @pyqtSlot(bool)
-    def setShowLabels(self, showlabels):
+    @showLabels.setter
+    def showLabels(self, showlabels):
         self._show_labels = showlabels
         self.update()
 
-    ShowLabels = pyqtProperty(bool, getShowLabels, setShowLabels)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getShowLines(self):
+    @pyqtProperty(bool)
+    def showLines(self):
         return self._show_lines
 
-    @pyqtSlot(bool)
-    def setShowLines(self, showlines):
+    @showLines.setter
+    def showLines(self, showlines):
         self._show_lines = showlines
         self.update()
 
-    ShowLines = pyqtProperty(bool, getShowLines, setShowLines)
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getOrientation(self):
+    @pyqtProperty(Qt.Orientation)
+    def orientation(self):
         return self._orientation
 
-    @pyqtSlot(Qt.Orientation)
-    def setOrientation(self, orientation):
+    @orientation.setter
+    def orientation(self, orientation):
         self._orientation = orientation
         self.update()
 
-    Orientation = pyqtProperty(Qt.Orientation, getOrientation, setOrientation)
-
-
-    #
     # Provide getter and setter methods for the property.
-    #
-
-    def getFlip(self):
+    @pyqtProperty(bool)
+    def flip(self):
         return self._flip
 
-    @pyqtSlot(bool)
-    def setFlip(self, flip):
+    @flip.setter
+    def flip(self, flip):
         self._flip = flip
         self.update()
 
-    Flip = pyqtProperty(bool, getFlip, setFlip)
 
+    def doNGLCode(self, **kwargs):
+
+        import pkg_resources
+
+        res_path = pkg_resources.resource_filename('ngl_utils', 'templates/graphscale.ntp')
+        with open(res_path, 'rt') as f:
+            template = f.read()
+
+        # convert coordinates
+        g = self._ngl_geometry()
+
+        # orientation
+        ori = {1: 'NGL_Horizontal', 2: 'NGL_Vertical'}
+
+        # get font pointer name
+        _, fontPointerName = NGL_Font.formatQFontName(self.font)
+
+        return template.format(
+                pageName = self._ngl_parent_obj_name(),
+                itemName = self.objectName(),
+                x0 = g.x(),
+                y0 = g.y(),
+                x1 = g.x() + g.width() - 1,
+                y1 = g.y() + g.height() - 1,
+                minimum = self.minimum,
+                maximum = self.maximum,
+                scalecent = self.scaleCent,
+                labels = '{%s}' % self.labels,
+                units = '"%s"' % self.units,
+                showlabels = self.showLabels,
+                showlines = self.showLines,
+                flip = self.flip,
+                orientation = ori[self.orientation],
+                font = fontPointerName,
+                color = self._ngl_color('color: rgb'))
+
+    @staticmethod
+    def ngl_draw(**kwargs):
+        s = 'NGL_GUI_DrawGraphScale({objects}[{index}]);'
+
+        return s.format(
+            objects = kwargs['name'],
+            index = kwargs['index'])
 
 
 # if run as main program
@@ -413,10 +414,11 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = NGL_GraphScale()
 
-    widget.setOrientation(Qt.Vertical)
-    widget.setFlip(True)
-    widget.setShowLines(True)
-    widget.setShowLabels(True)
+    # widget.orientation = Qt.Vertical
+    # widget.flip = True
+    widget.setStyleSheet('color: rgb(255, 0, 0)')
+    widget.showLines = True
+    widget.showLabels = True
 
     widget.show()
     sys.exit(app.exec_())

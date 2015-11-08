@@ -1,7 +1,7 @@
 import sys
 
 # ------------------------------------------------------------------------------
-# parseICO
+# _format
 # ------------------------------------------------------------------------------
 def _format(msg, left_margin=0, right_margin=120):
     """ Format a message by inserting line breaks at appropriate places.  msg
@@ -49,7 +49,7 @@ def inform(msg):
     sys.stdout.write(_format("Inform: " + msg) + "\n")
 
 # ------------------------------------------------------------------------------
-# inform message
+# newline
 # ------------------------------------------------------------------------------
 def newline():
     sys.stdout.write("\n")

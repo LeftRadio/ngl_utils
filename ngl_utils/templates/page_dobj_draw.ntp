@@ -1,0 +1,6 @@
+
+    /* Draw {objname} objects */
+    for(cnt = 0; cnt < {objcnt}; cnt++)
+    {{
+        {drawfunc}
+    }}

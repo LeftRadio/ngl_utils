@@ -20,8 +20,8 @@ from ngl_utils.nfont.cparser import NFontParser
 from ngl_utils.ncodegenerator import NFontCodeGen
 from ngl_utils.messages import inform, error, newline
 
-from ngl_fillbar import NGL_FillBar
-from ngl_button import NGL_Button
+# from ngl_fillbar import NGL_FillBar
+# from ngl_button import NGL_Button
 
 # ------------------------------------------------------------------------------
 # PixelDelegate

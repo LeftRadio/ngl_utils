@@ -48,20 +48,20 @@ class NFontConverter(object):
         NFontConverter.font = font
         # font.setHintingPreference( QFont.PreferNoHinting )
         # font.setStyleHint( QFont.SansSerif )
-        font.setStyleStrategy( QFont.NoAntialias | QFont.PreferQuality )
+        font.setStyleStrategy(QFont.NoAntialias | QFont.PreferQuality)
 
         # create NGL_Font and generate all chars code
         nfont = NGL_Font(name, font)
         offset = 0
         for char in chars_sets:
-            ch_bmp = NFontConverter.font_charBmp( font, char )
+            ch_bmp = NFontConverter.font_charBmp(font, char)
             ch_code, ch_offset = NFontConverter.font_bmpCode(ch_bmp)
 
-            nfont.add_char( char, ch_code, offset, ch_bmp )
+            nfont.add_char(char, ch_code, offset, ch_bmp)
             offset += ch_offset
 
         # generate code text out
-        nfont.code = NFontCodeGen.font( nfont )
+        nfont.code = NFontCodeGen.font(nfont)
 
         return nfont
 

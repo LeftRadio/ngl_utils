@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from ngl_base_plugin import NGL_BasePlugin
+from ngl_utils.nplugins.python.ngl_base_qplugin import NGL_BasePlugin
 from ngl_bitmap import NGL_Bitmap
+import pkg_resources
 
 
 class NGL_BitmapPlugin(NGL_BasePlugin):
@@ -18,6 +19,9 @@ class NGL_BitmapPlugin(NGL_BasePlugin):
     def name(self):
         return "NGL_Bitmap"
 
+    def icon(self):
+        return QIcon()
+
     # Returns an XML description of a custom widget instance that describes
     def domXml(self):
         return '<widget class="NGL_Bitmap" name="nglBitmap" />\n'
@@ -25,4 +29,4 @@ class NGL_BitmapPlugin(NGL_BasePlugin):
     # Returns the module containing the custom widget class. It may include
     # a module path.
     def includeFile(self):
-        return "ngl_bitmap"
+        return ".ngl_bitmap"

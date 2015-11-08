@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from ngl_base_plugin import NGL_BasePlugin
+from ngl_utils.nplugins.python.ngl_base_qplugin import NGL_BasePlugin
 from ngl_button import NGL_Button
+import pkg_resources
 
 
 class NGL_ButtonPlugin(NGL_BasePlugin):
@@ -17,6 +18,12 @@ class NGL_ButtonPlugin(NGL_BasePlugin):
     # by this plugin.
     def name(self):
         return "NGL_Button"
+
+    def icon(self):
+        res_path = pkg_resources.resource_filename(
+            'ngl_utils.nplugins.python', 'ico/button.ico')
+        self.__ico = QIcon(res_path)
+        return self.__ico
 
     # Returns an XML description of a custom widget instance that describes
     def domXml(self):

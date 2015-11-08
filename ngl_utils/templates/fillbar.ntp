@@ -1,0 +1,14 @@
+/* {pageName} {itemName} item */
+NGL_FillBar {itemName} = {{
+    {x0}, {y0}, {x1}, {y1},     // coordinates
+    {VertHoriz},                // orientation
+    {Level_MIN}, {Level_MAX},   // min/max levels
+    {Level},                    // level
+    {sfX1}, {sfY1},             // old level coords (used for lcd draw optimization)
+    {Logarithmic},              // log mode
+    {FullScale_dB},             // full scale dB (only for log mode)
+    {Border},                   // draw border state
+    {Markers},                  // draw markers state
+    {MarkersColor},             // markers color
+    {Color}                     // main fillbar color
+}};

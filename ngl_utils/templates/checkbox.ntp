@@ -1,0 +1,12 @@
+/* {pageName} {itemName} item */
+{text_var}
+
+NGL_CheckBox {itemName} = {{
+    {x0}, {y0}, {x1}, {y1},
+    {checked},
+    {font_pointer},
+    {text_pointer},
+    {color},
+    {text_color},
+    {p_event}
+}};

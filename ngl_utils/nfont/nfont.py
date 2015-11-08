@@ -19,13 +19,13 @@ class NGL_Font(object):
 
     def get_char(self, char):
         if char in self.nchars:
-            return self.nchars[ char ]
+            return self.nchars[char]
 
     def get_chars_dict(self):
         return self.nchars
 
     def get_chars_list(self):
-        return [  self.nchars[c] for c in sorted(self.nchars) ]
+        return [self.nchars[c] for c in sorted(self.nchars)]
 
     def clear_char_set(self):
         self.nchars = {}
@@ -36,6 +36,12 @@ class NGL_Font(object):
         self._code = code
 
     code = property( get_code, set_code )
+
+    def max_height(self):
+        mh = 0
+        for ch in self.nchars:
+            mh = max(mh, self.nchars[ch]['bitmap'].height())
+        return mh
 
     def code_size_calc(self):
         """

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from ngl_utils.nplugins.widgets import NGL_Base
-
+from ngl_utils.nplugins.widgets.ngl_base import NGL_Base
 from PyQt5.QtCore import pyqtProperty, QRect, QSize, Qt
 from PyQt5.QtGui import QPainter, QIcon
 
@@ -16,6 +15,7 @@ class NGL_Bitmap(NGL_Base):
         super(NGL_Bitmap, self).__init__(parent)
 
         self._ico = QIcon()
+        self._static = True
         self.setGeometry(100, 100, 100, 100)
         self.update()
 
@@ -27,7 +27,7 @@ class NGL_Bitmap(NGL_Base):
 
         # get rect and flags for paint
         rect = QRect(0, 0, self.size().width(), self.size().height())
-        flags = Qt.AlignJustify #Qt.AlignHCenter | Qt.AlignVCenter
+        flags = Qt.AlignJustify
 
         # paint ico image
         self._ico.paint(painter, rect, flags)
@@ -38,7 +38,6 @@ class NGL_Bitmap(NGL_Base):
         """ Return Qt sizeHint """
         return self.size()
 
-
     # Provide getter and setter methods for the property.
     @pyqtProperty(QIcon)
     def icon(self):
@@ -47,15 +46,30 @@ class NGL_Bitmap(NGL_Base):
     @icon.setter
     def icon(self, ico):
         self._ico = ico
-        actualsize = self._ico.actualSize(QSize(16**2,16**2))
+        actualsize = self._ico.actualSize(QSize(16**2, 16**2))
         self.setMaximumSize(actualsize)
         self.setMinimumSize(actualsize)
         self.update()
 
-
     def doNGLCode(self, **kwargs):
-        template = ''
-        return template
+        """ generane ngl code """
+
+        template = 'NGL_DrawImage({x}, {y}, {image_pointer});'
+
+        # convert coordinates
+        g = self._ngl_geometry()
+
+        # ico name
+        if 'iconame' in kwargs and kwargs['iconame'] is not None:
+            icon_name = '(NGL_Bitmap*)&' + kwargs['iconame']
+        else:
+            icon_name = '(void*)0'
+
+        # format and return final code
+        return template.format(
+                            x = g.x(),
+                            y = g.y(),
+                            image_pointer=icon_name)
 
 
 # if run as main program

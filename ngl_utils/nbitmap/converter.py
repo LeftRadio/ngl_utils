@@ -2,90 +2,53 @@
 
 import os
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QColor, QPainter
 
 from ngl_utils.ncodegenerator import NBitmapCodeGen
 from ngl_utils.nbitmap.nbitmap import NGL_Bitmap
-from ngl_utils.rle import rlem_encode
-
-
-class NColor(object):
-    """docstring for NColor"""
-
-    @staticmethod
-    def fromARGB(argb_data):
-        """ convert 8888_ARGB to 565_RGB """
-        R = ((argb_data >> 19) & 0x1F) << 11
-        G = ((argb_data >> 10) & 0x3F) << 6
-        B = argb_data & 0x1F
-        return (R | G | B)
-
-    @staticmethod
-    def fromRGB(rgb):
-        """ convert 8888_ARGB to 565_RGB """
-        R = (rgb[0] & 0x1F) << 11
-        G = (rgb[1] & 0x3F) << 6
-        B = rgb[2] & 0x1F
-        return (R | G | B)
-
-    @staticmethod
-    def fromQColor(qcolor):
-        rgba = qcolor.rgba()
-        return NColor.fromARGB(rgba >> 8)
-
+from ngl_utils.nplugins.widgets.ngl_colors import NGL_Colors
+from ngl_utils.rle import rlem_encode, rlem_decode
 
 
 class NBitmapsConverter(object):
     """docstring for NBitmapsConverter"""
 
     @staticmethod
-    def convertParsedBitmap(bitmap, nformat, compress):
-        image = QImage(bitmap['path'])
-        # image = image.scaled(QSize(int(bitmap['width']),
-        #                            int(bitmap['height'])),
-        #                      Qt.IgnoreAspectRatio,
-        #                      Qt.SmoothTransformation)
-
-        return NBitmapsConverter.convertQImage(image,
-                                               bitmap['name'],
-                                               nformat,
-                                               compress)
-
-    @staticmethod
-    def convertQImage(image, name, nformat, compress):
+    def convertQImage(image, name, nformat, compress, backcolor):
         compressType, _ = compress
 
-        ngl_bitmap = NGL_Bitmap(name,
-                                image.width(),
-                                image.height(),
-                                compressType)
-        # conbert/comress data
-        ngl_bitmap.data, ngl_bitmap.compressed = NBitmapsConverter.compressData(image, compress)
+        nbmp = NGL_Bitmap(name, image.width(), image.height(), compressType)
+
+        # convert/compress data
+        nbmp.data, nbmp.compressed = NBitmapsConverter.compressData(image, compress, nformat, name, backcolor)
 
         # code len in words and bytes
-        ngl_bitmap.data_len_in_words = len(ngl_bitmap.data)
-        ngl_bitmap.data_len_in_bytes = ngl_bitmap.data_len_in_words
+        nbmp.data_len_in_words = len(nbmp.data)
 
-        if True in [True for x in ngl_bitmap.data if x > 0xFF]:
-            ngl_bitmap.data_len_in_bytes *= 2
-            ngl_bitmap.data_word_size = 16
-        else:
-            ngl_bitmap.data_word_size = 8
+        if nformat == 'format8' or nbmp.compressed == 'JPG':
+            nbmp.data_len_in_bytes = nbmp.data_len_in_words
+            nbmp.data_word_size = 8
+            nbmp.datatype = 'uint8_t'
+        elif nformat == 'format16':
+            nbmp.data_len_in_bytes = nbmp.data_len_in_words * 2
+            nbmp.data_word_size = 16
+            nbmp.datatype = 'uint16_t'
 
         # generate data code
-        ngl_bitmap.code = NBitmapCodeGen.bitmap(ngl_bitmap)
+        nbmp.code = NBitmapCodeGen.bitmap(nbmp)
 
-        return ngl_bitmap
+        return nbmp
 
     @staticmethod
-    def compressData(image, compress):
-        """ compress data None/RLE/JPG/AutoSize """
+    def compressData(image, compress, nformat, name, backcolor):
+        """ compress data NONE, RLE, JPG, AUTO(minimum size) """
         compressType, compressQuality = compress
+        data = []
 
-        if compressType == 'Auto':
-            dataNone, nk = NBitmapsConverter.compressData(image, ('None', None))
-            dataRLE, rk = NBitmapsConverter.compressData(image, ('RLE', None))
-            dataJPG, jk = NBitmapsConverter.compressData(image, ('JPG', compressQuality))
+        if compressType == 'AUTO':
+            dataNone, nk = NBitmapsConverter.compressData(image, ('None', None), nformat, name, backcolor)
+            dataRLE, rk = NBitmapsConverter.compressData(image, ('RLE', None), nformat, name, backcolor)
+            dataJPG, jk = NBitmapsConverter.compressData(image, ('JPG', compressQuality), nformat, name, backcolor)
 
             min_len = 2**32
             for key, dt in [(nk, dataNone), (rk, dataRLE), (jk, dataJPG)]:
@@ -108,14 +71,40 @@ class NBitmapsConverter(object):
             os.remove(path)
 
         else:
-            data = []
-            for x in range(image.width()):
-                for y in range(image.height()):
+            r, g, b = NGL_Colors.getRGB(backcolor)
+            Qbackcolor = QColor(r, g, b)
+
+            # 1px image and painter for images with alfa
+            img = QImage(1,1, QImage.Format_ARGB32)
+            painter = QPainter()
+
+            for y in range(image.height()-1, -1, -1):
+                for x in range(image.width()):
                     argb_pixel = image.pixel(x, y)
-                    pixelData = NColor.fromARGB(argb_pixel)
+                    alfa = (argb_pixel >> 24)
+
+                    alfa = (argb_pixel >> 24) & 0xFF
+                    if alfa == 0xFF:
+                         pixelData = NGL_Colors.fromARGB(argb_pixel)
+                    else:
+                        color = QColor(argb_pixel)
+                        color.setAlpha(alfa)
+                        pixelData = NBitmapsConverter.mixColors(img, Qbackcolor, color, painter)
+
                     data.append(pixelData)
 
             if compressType == 'RLE':
                 data = rlem_encode(data)
 
         return (data, compressType)
+
+    @staticmethod
+    def mixColors(img, backcolor, color, painter):
+        img.setPixel(0, 0, backcolor.rgb())
+
+        painter.begin(img)
+        painter.setPen(color)
+        painter.drawPoint(0, 0)
+        painter.end()
+
+        return NGL_Colors.fromARGB(img.pixel(0, 0))

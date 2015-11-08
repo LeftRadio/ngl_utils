@@ -2,11 +2,10 @@
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtDesigner import QPyDesignerCustomWidgetPlugin
-from ngl_meter import NGL_Meter
 
 
-class NGL_MeterPlugin( QPyDesignerCustomWidgetPlugin ):
-    """NGL_MeterPlugin(QPyDesignerCustomWidgetPlugin)
+class NGL_BasePlugin(QPyDesignerCustomWidgetPlugin):
+    """NGL_BasePlugin(QPyDesignerCustomWidgetPlugin)
 
     Provides a Python custom plugin for Qt Designer by implementing the
     QDesignerCustomWidgetPlugin via a PyQt-specific custom plugin class.
@@ -15,9 +14,7 @@ class NGL_MeterPlugin( QPyDesignerCustomWidgetPlugin ):
     # The __init__() method is only used to set up the plugin and define its
     # initialized variable.
     def __init__(self, parent=None):
-
-        super(NGL_MeterPlugin, self).__init__(parent)
-
+        super(NGL_BasePlugin, self).__init__(parent)
         self.initialized = False
 
     def initialize(self, formEditor):
@@ -27,19 +24,7 @@ class NGL_MeterPlugin( QPyDesignerCustomWidgetPlugin ):
         self.initialized = True
 
     def isInitialized(self):
-
         return self.initialized
-
-    # This factory method creates new instances of custom widget with the
-    # appropriate parent.
-    def createWidget(self, parent):
-        widget = NGL_Meter(parent)
-        return widget
-
-    # This method returns the name of the custom widget class that is provided
-    # by this plugin.
-    def name(self):
-        return "NGL_Meter"
 
     # Returns the name of the group in Qt Designer's widget box that this
     # widget belongs to.
@@ -66,12 +51,3 @@ class NGL_MeterPlugin( QPyDesignerCustomWidgetPlugin ):
     # interface if they need to add custom editing support to Qt Designer.
     def isContainer(self):
         return False
-
-    # Returns an XML description of a custom widget instance that describes
-    def domXml(self):
-        return '<widget class="NGL_Meter" name="nglMeter" />\n'
-
-    # Returns the module containing the custom widget class. It may include
-    # a module path.
-    def includeFile(self):
-        return "ngl_meter"

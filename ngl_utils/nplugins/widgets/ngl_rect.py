@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from ngl_utils.nplugins.widgets import NGL_Base
-
+from ngl_utils.nplugins.widgets.ngl_base import NGL_Base
+from ngl_utils.nplugins.widgets.qstyle_parser import QStyleParser
 from PyQt5.QtCore import pyqtSlot, pyqtProperty, QRect
 from PyQt5.QtGui import QPainter
 
@@ -16,6 +16,7 @@ class NGL_Rect(NGL_Base):
         super(NGL_Rect, self).__init__(parent)
 
         self._fill = False
+        self._static = True
 
         self.setGeometry(100, 100, 100, 100)
         self.setStyleSheet('color: rgb(64, 64, 64);')
@@ -59,8 +60,8 @@ class NGL_Rect(NGL_Base):
     fill = pyqtProperty(bool, getFill, setFill)
 
 
-    def doNGLCode(self):
-        func = "NGL_GP_DrawRect({x0}, {y0}, {x1}, {y1}, {color}{fill});\n"
+    def doNGLCode(self, **kwargs):
+        func = "NGL_GP_DrawRect({x0}, {y0}, {x1}, {y1}, {color}{fill});"
         color = self._ngl_color('color: rgb')
         fill = ''
 
@@ -94,4 +95,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = NGL_Rect()
     widget.show()
+    print(widget.currentIndex())
     sys.exit(app.exec_())

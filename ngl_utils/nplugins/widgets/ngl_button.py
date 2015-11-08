@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ngl_utils.nplugins.widgets import NGL_Base
+from ngl_utils.nplugins.widgets.ngl_base import NGL_Base
 from ngl_utils.nplugins.widgets.qstyle_parser import QStyleParser
 
 from PyQt5.QtCore import pyqtProperty, QRect, QSize, Qt
@@ -29,6 +29,9 @@ class NGL_Button(NGL_Base):
     ico = 'ico'
     ico_text = 'ico_text'
 
+    # order for NGL library page struct pointers order
+    ngl_order = 1
+
     def __init__(self, parent=None):
         """ NGL_Button widget constructor """
         super(NGL_Button, self).__init__(parent)
@@ -41,6 +44,8 @@ class NGL_Button(NGL_Base):
         self._sy = 0
         self._ico = QIcon()
         self._ico_size = QSize(32, 32)
+
+        self._eventsEnabled = True
 
         self.setGeometry(100, 100, 70, 25)
         self.styleType = NGL_Button.fill
@@ -84,7 +89,7 @@ class NGL_Button(NGL_Base):
         else:
             painter.fillRect(self._rect(), backcolor )
 
-    def _drawICO(self, painter):
+    def _drawICO(self, painter, align = Qt.AlignHCenter | Qt.AlignTop):
         """
         Draw button icon.
         Icon rescaled if button.rect() < ico.rect() but in the
@@ -96,13 +101,13 @@ class NGL_Button(NGL_Base):
         y = 0
         rect = QRect(x, y, ico_size.width(), ico_size.height())
 
-        self._ico.paint( painter, rect, Qt.AlignHCenter | Qt.AlignVCenter)
+        self._ico.paint( painter, rect, align)
 
-    def _drawText(self, painter, color, flags = Qt.AlignCenter):
+    def _drawText(self, painter, color, align = Qt.AlignCenter):
         """ Draw btn text, same as in NGL library """
         painter.setFont(self._font)
         painter.setPen(color)
-        painter.drawText(self._rect(), flags , self._text)
+        painter.drawText(self._rect(), align , self._text)
 
     def _getColors(self):
         """ Get back and text QColor vars from styleSheet, used QStyleParser """
@@ -217,38 +222,30 @@ class NGL_Button(NGL_Base):
 
 
     def doNGLCode(self, **kwargs):
-        template = """
-/* {pageName} {itemName} item */
-NGL_Button {itemName} = {{
-    {x},
-    {y},
-    {width},
-    {height},
-    {type},
-    {color},
-    {backColor},
-    {colorShift},
-    {bitmapName},
-    {fontName},
-    {text_X_shift},
-    {text_Y_shift},
-    {textColor},
-    "{text}",
-    ReClick_ENABLE,
-    {visible},
-    {status},
-    {eventName},
-}};"""
+
+        import pkg_resources
+
+        res_path = pkg_resources.resource_filename('ngl_utils', 'templates/button.ntp')
+        with open(res_path, 'rt') as f:
+            template = f.read()
 
         icon_name = '(void*)0'
         font_pointer_name = '(void*)0'
         backcolor, color = self._getColors()
 
-        if 'iconame' in kwargs and kwargs['iconame']:
-            icon_name = '(NGL_Image*)&' + kwargs['iconame']
+        if 'iconame' in kwargs and kwargs['iconame'] is not None:
+            icon_name = '(NGL_Bitmap*)&' + kwargs['iconame']
+        else:
+            icon_name = '(void*)0'
 
         # convert coordinates
         g = self._ngl_geometry()
+
+        __style = {
+            'text': 'TextButton',
+            'fill': 'ColorFillButton',
+            'ico': 'IconButton',
+            'ico_text': 'IconButton'}
 
         return template.format(
             pageName    = self._ngl_parent_obj_name(),
@@ -257,8 +254,8 @@ NGL_Button {itemName} = {{
             y           = g.y(),
             width       = g.width(),
             height      = g.height(),
-            type        = self.styleType,
-            color       = self._ngl_color('color: rgb'),
+            type        = __style[self.styleType],
+            color       = self._ngl_color('background-color: rgb'),
             backColor   = self._ngl_color('background-color: rgb'),
             colorShift  = 'TRUE',
             bitmapName  = icon_name,
@@ -269,8 +266,16 @@ NGL_Button {itemName} = {{
             text        = self.text,
             visible     = 'TRUE',
             status      = 'ENABLE',
-            eventName   = self.objectName() + '_click'
-        ).replace('True', 'ENABLE').replace('False', 'DISABLE')
+            eventName   = self.clickEventName
+        )
+
+    @staticmethod
+    def ngl_draw(**kwargs):
+        s = 'NGL_GUI_DrawButton({objects}[{index}], ResetButton);'
+
+        return s.format(
+            objects = kwargs['name'],
+            index = kwargs['index'])
 
 
 
@@ -282,6 +287,6 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     widget = NGL_Button()
-    print(widget.doNGLCode())
     widget.show()
+
     sys.exit(app.exec_())

@@ -1,4 +1,6 @@
 /* {pageName} {itemName} item */
+{textVar}
+
 NGL_Label {itemName} = {{
     {x},
     {y},

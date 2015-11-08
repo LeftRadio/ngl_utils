@@ -6,5 +6,5 @@
 */
 {static} void {func_name}(void)
 {{
-    /* todo! */
+    {func_code}
 }}

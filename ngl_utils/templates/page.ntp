@@ -26,24 +26,17 @@
 /* Private variables ---------------------------------------------------------*/
 NGL_Page {pageName} = {{
     {{ {rect} }},       // [X0, Y0, X1, Y1]
-    {clip},             // Clip for Page
-    {clip_id},          // Clip object ID
+    {id},               // ID
     {bcolor},           // BackColor
-    {start_btn},        // first button index
-    {btn_cnt},          // All buttons count
-    {sel_indx},         // Selected button index
-    {old_indx},         // Old selected button index
-    {lbl_cnt},          // Labels count
-
-    /* Buttons pointers array */
-    {{ {btn_pnt} }},
-
-    /* Labels pointers array */
-    {{ {lbl_pnt} }},
-
     TRUE,               // Exit allowed
+
+    /* Objects pointers array (Buttons, Labels, FillBars, etc.) */
+    {{
+        {objects_pnt}
+    }},
+
     {pageName}_Draw,    // Page draw function
-    (void*)0,           // Page CallBack function
+    {pageName}_Click,   // Page click (or index change) function
 }};
 
 /* Private functions ---------------------------------------------------------*/

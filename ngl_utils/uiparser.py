@@ -4,8 +4,9 @@ import os
 import xml.etree.ElementTree as ET
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
-from ngl_utils.nbitmap.converter import NColor
+from ngl_utils.nplugins.widgets.ngl_colors import NGL_Colors
 from ngl_utils.nplugins.widgets.qstyle_parser import QStyleParser
+from ngl_utils.messages import inform
 
 
 class UIParser(object):
@@ -35,9 +36,9 @@ class UIParser(object):
         return ET.parse(xmlfile).getroot()
 
     def parse(self):
+        """ Parse Qt ui file provide pyqt uic module
         """
-        """
-        # load ui file provide pyqt uic module
+        #
         self.uic = uic.loadUi(self.uifile,
                               package='ngl_utils.nplugins.widgets')
 
@@ -47,7 +48,7 @@ class UIParser(object):
         # parse ngl page object
         self.ppage['objects'] = self._parseObjects(self.uic)
 
-        # # collect all fonts and bitmaps in project objects
+        # collect all fonts and bitmaps in project objects
         self.ppage['fonts'] = self._collectResource('font',
                                                     self.ppage['objects'])
         self.ppage['bitmaps'] = self._parseBitmaps('icon', self.uifile)
@@ -66,19 +67,23 @@ class UIParser(object):
         """ return parsed bitmaps and font """
         return (self.ppage['bitmaps'], self.ppage['fonts'])
 
+    def _qSortedObjects(self):
+        """ return objects from pyqt uic module, sorted by QtDesigner order """
+        return [obj.objectName() for obj in self.uic.children()]
+
     def _collectResource(self, name, objects):
-        # collect all resources
+        """ collect all Font/Bitmap resources
+        """
         resources = []
         for class_key in objects.keys():
             # iterate objects in this objects class
             for obj_key in objects[class_key]:
                 # iterate properties
                 obj = objects[class_key][obj_key]
-
                 # if nedeed resource in object
                 if name in dir(obj):
                     attr = getattr(obj, name)
-                    # if resource not method
+                    # if attribute is not method
                     if attr.__class__.__name__ not in 'builtin_function_or_method':
                         # if not duplicate resources
                         if attr not in resources:
@@ -87,31 +92,30 @@ class UIParser(object):
         return resources
 
     def _parseBitmaps(self, name, uifile):
+        """ Parse all bitmaps from ui file used xml.etree parser
+        """
         root = self.getroot(uifile)
         paths = []
         bitmaps = {}
 
-        for p in root.iter('property'):
+        main = root.find('widget')
+        for w in main.findall('widget'):
+            for p in w.findall('property'):
 
-            if p.attrib['name'] == 'icon':
-                path = p.find('iconset').find('normaloff').text
-                path = os.path.abspath(path)
+                if p.attrib['name'] == 'icon':
+                    path = p.find('iconset').find('normaloff').text
+                    path = os.path.abspath(path)
 
-                if path not in paths:
-                    paths.append(path)
-
-        for path in paths:
-            bitmaps[path] = []
-
-            main = root.find('widget')
-            for w in main.findall('widget'):
-                for p in w.findall('property'):
-                    if p.attrib['name'] == 'icon':
+                    if path not in bitmaps:
+                        bitmaps[path] = [w.attrib['name']]
+                    else:
                         bitmaps[path].append(w.attrib['name'])
 
         return bitmaps
 
     def _parsePage(self, uic_page):
+        """ Parse page
+        """
         page = {
             'class': 'NGL_Page',
             'name': uic_page.objectName(),
@@ -120,37 +124,34 @@ class UIParser(object):
 
         color = QStyleParser.getColor(uic_page.styleSheet(),
                                       'background-color: rgb')
-        if color is None:
-            color = Qt.black
-
-        page['background_color'] = NColor.fromQColor(color)
+        page['background_color'] = NGL_Colors.fromQColor(color)
 
         return page
 
     def _parseObjects(self, page):
-        # get page dictionary objects
-        pdict = page.__dict__
-
+        """ Parse NGL objects for gived page,
+            return objects dict, like -
+            {'NGL_Label': {dict of ngl labels objects},
+             'NGL_Button': {dict of ngl labels objects},
+             ...
+            }
+        """
         # filter NGL objects
-        qobjects = [pdict[w] for w in pdict.keys() if 'NGL' in pdict[w].__class__.__name__]
-
-        # create out objects dictionary
-        out_objects = {
-            'NGL_Line': {},
-            'NGL_Rect': {},
-            'NGL_Bitmap': {},
-            'NGL_Button': {}
-        }
+        qobjects = [obj for obj in self.uic.children() if 'NGL' in obj.__class__.__name__]
 
         # parse all objects
+        out_objects = {}
         for qobj in qobjects:
-            name = qobj.__class__.__name__
+
+            classname = qobj.__class__.__name__
+            objectname = qobj.objectName()
 
             # create dict key if object class type not in out_objects
-            if name not in out_objects:
-                out_objects[name] = {}
+            if classname not in out_objects:
+                out_objects[classname] = {}
 
-            # get object name and use name as tag, store object
-            out_objects[name][qobj.objectName()] = qobj
+            # get object name and use as key, store object
+            qobj.orderIndex = self._qSortedObjects().index(qobj.objectName())
+            out_objects[classname][objectname] = qobj
 
         return out_objects

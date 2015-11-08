@@ -1,0 +1,14 @@
+/* {pageName} {itemName} item */
+NGL_GraphScale {itemName} = {{
+    {x0}, {y0}, {x1}, {y1},     // coordinates
+    {minimum}, {maximum},       // min/max levels
+    {scalecent},                // scale cent
+    {labels},                   // graph scale labels
+    {units},                    // scale units
+    {showlabels},               // show labels state
+    {showlines},                // show lines state
+    {flip},                     // flip
+    {orientation},              // vertical/horizontal orientation
+    {font},
+    {color}
+}};
