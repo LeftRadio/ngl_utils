@@ -388,6 +388,7 @@ class NGL_GraphScale(NGL_Base):
                 maximum = self.maximum,
                 scalecent = self.scaleCent,
                 labels = '{%s}' % self.labels,
+                labels_cnt = len(self.labels.split(',')),
                 units = '"%s"' % self.units,
                 showlabels = self.showLabels,
                 showlines = self.showLines,

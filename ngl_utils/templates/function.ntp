@@ -4,7 +4,7 @@
   * @param  None
   * @retval None
 */
-{static} void {func_name}(void)
+{static} {ret} {func_name}({fargs})
 {{
     {func_code}
 }}

@@ -6,7 +6,7 @@ print(find_packages())
 
 setup(
     name                    = 'ngl_utils',
-    version                 = '1.4.9',
+    version                 = '1.5.0',
     author                  = 'Vladislav Kamenev',
     author_email            = 'wladkam@mail.com',
     url                     = 'https://github.com/LeftRadio/ngl_utils',

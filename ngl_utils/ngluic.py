@@ -15,7 +15,7 @@ from ngl_utils.ncodegenerator import ( NCodeService, NCodeGen, NFontCodeGen,
 
 from ngl_utils.messages import inform, error, newline
 
-__version__ = "1.4.9"
+__version__ = "1.5.0"
 
 
 class NUIC(object):
@@ -26,13 +26,14 @@ class NUIC(object):
         self.parser = UIParser(qt_uifile)
         self.dirs = None
 
-    def pageCode(self, page, verbose):
+    def pageCode(self, page, bitmaps, fonts, verbose):
         """ Generate code (page struct, events functions, page draw func, etc.)
             for gived page.
         """
         if verbose:
             inform('generate page code for [ %s ] ' % page['name'])
-        return NCodeGen.generetePageCode(page)
+
+        return NCodeGen.generetePageCode(page, bitmaps, fonts)
 
     def pageHeaderCode(self, page, verbose):
         """ Generate page header code.
@@ -42,14 +43,14 @@ class NUIC(object):
 
         return NCodeGen.pagesHeader(page)
 
-    def objectsHeaderCode(self, page, verbose):
+    def objectsHeaderCode(self, page, bitmaps, fonts, verbose):
         """ Generate objects(Labels, Bitmaps, Buttons, etc.) header code
             for gived page.
         """
         if verbose:
             inform('generate object headers code for page [ %s ]' % page['name'])
 
-        return NCodeGen.generateObjectsHeader(page)
+        return NCodeGen.generateObjectsHeader(page, bitmaps, fonts)
 
     def convertFonts(self, fonts, verbose):
         """ converting all parset fonts to NGL_Font objects
@@ -79,12 +80,18 @@ class NUIC(object):
 
         return NFontCodeGen.generateFontsHeader( fonts )
 
-    def convertBitmaps(self, bitmap_paths, compress, backcolor, verbose):
+    def convertBitmaps(self, bitmaps, compress, backcolor, verbose):
         """ Converting all parsed bitmaps to NGL_Bitmap objects
         """
-        return [self._convertBitmap(path, compress, backcolor, verbose) for path in bitmap_paths]
+        ngl_bitmaps = []
 
-    def _convertBitmap(self, path, compress, backcolor, verbose):
+        for bmp in bitmaps:
+            b = self._convertBitmap(bmp, bitmaps[bmp], compress, backcolor, verbose)
+            ngl_bitmaps.append(b)
+
+        return ngl_bitmaps
+
+    def _convertBitmap(self, path, objects, compress, backcolor, verbose):
         """ Convert parsed bitmap to NGL_Bitmap object
             path - path for input bitmap
             compress - type of compressing - 'None', 'RLE', 'JPG', 'Auto'
@@ -101,6 +108,8 @@ class NUIC(object):
                                                          'format16',
                                                          compress,
                                                          backcolor)
+            ngl_bitmap.objects = objects
+
             if verbose:
                 inform(('converting bitmap {name}, size {width}x{height}, '
                         'compress {compress}, data len {size} bytes'
@@ -333,9 +342,9 @@ def main():
     ngl_bitmaps_header = nuic.bitmapsHeaderCode( ngl_bitmaps, verbose )
 
     # generate page and objects code
-    pagecode = nuic.pageCode( ppage, verbose )
+    pagecode = nuic.pageCode( ppage, ngl_bitmaps, ngl_fonts, verbose )
     pageheadercode = nuic.pageHeaderCode( ppage, verbose )
-    headerscode = nuic.objectsHeaderCode(ppage, verbose)
+    headerscode = nuic.objectsHeaderCode(ppage, ngl_bitmaps, ngl_fonts, verbose)
 
     # inform by end of conversion and generation code
     nuic.informUser( 'convert_end', verbose )

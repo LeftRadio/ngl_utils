@@ -34,9 +34,6 @@ class NGL_SeekBar(NGL_Base):
         self.setStyleSheet('color: rgb(64, 128, 64);')
         self.update()
 
-    # def update(self):
-    #     super(NGL_SeekBar, self).update()
-
     def paintEvent(self, event):
         p = QPainter()
 
@@ -212,6 +209,12 @@ class NGL_SeekBar(NGL_Base):
         # orientation
         ori = {1: 'NGL_Horizontal', 2: 'NGL_Vertical'}
 
+        # slider
+        if self.orientation == Qt.Horizontal:
+            slider_size = self._slider_size.width()
+        else:
+            slider_size = self._slider_size.height()
+
         return template.format(
             pageName = self._ngl_parent_obj_name(),
             itemName = self.objectName(),
@@ -219,6 +222,7 @@ class NGL_SeekBar(NGL_Base):
             y0 = g.y(),
             x1 = g.x() + g.width() - 1,
             y1 = g.y() + g.height() - 1,
+            slider_size = slider_size,
             old_posX = '(uint16_t)(65535)',
             old_posY = '(uint16_t)(65535)',
             VertHoriz = ori[self.orientation],
@@ -227,7 +231,8 @@ class NGL_SeekBar(NGL_Base):
             Level = self.level,
             ShowProgress = self._show_progress,
             Color = self._ngl_color('color: rgb'),
-            SliderColor = hex(NGL_Colors.fromQColor(self._slider_color)))
+            SliderColor = hex(NGL_Colors.fromQColor(self._slider_color)),
+            p_event = self.clickEventName)
 
     @staticmethod
     def ngl_draw(**kwargs):

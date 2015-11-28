@@ -5,7 +5,7 @@ NGL_Label {itemName} = {{
     {x},
     {y},
     {color},
-    {visible},
+    {transparent},
     {text},
     {fontName},
 }};

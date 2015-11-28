@@ -16,9 +16,10 @@ class NGL_Bitmap(object):
         self.datatype = 'uint16_t'
         self.data = []
         self.code = ''
+        self.recepients = {}
 
     def get_name(self):
-        return self._name
+        return self._name.replace(' ', '_')
     def set_name(self, name):
         self._name = name
 
@@ -33,7 +34,7 @@ class NGL_Bitmap(object):
         self._height = height
 
     def get_compressed(self):
-        return self._compressed #.replace('None', '0').replace('RLE', '1').replace('JPG', '2')
+        return self._compressed
     def set_compressed(self, compressed):
         self._compressed = compressed
 

@@ -149,21 +149,22 @@ class NGL_Label(NGL_Base):
             with open(res_path, 'rt') as f:
                 template = f.read()
 
-            textVar = 'static const char {0}_text[{1}] = "{2}";'.format(
+            textVar = 'static char {0}_text[{1}] = "{2}";'.format(
                 self.objectName(),
                 len(self.text)+1,
                 self.text)
 
-            return template.format( pageName = self._ngl_parent_obj_name(),
-                                    itemName = self.objectName(),
-                                    x = g.x(),
-                                    y = g.y(),
-                                    color = self._ngl_color('color: rgb'),
-                                    visible = True,
-                                    textVar = textVar,
-                                    text = '(char*)%s_text' % self.objectName(),
-                                    fontName = fontPointerName
-            ).replace('True', 'ENABLE').replace('False', 'DISABLE')
+            return template.format(
+                pageName = self._ngl_parent_obj_name(),
+                itemName = self.objectName(),
+                x = g.x(),
+                y = g.y(),
+                color = self._ngl_color('color: rgb'),
+                transparent = 'Transparent',
+                textVar = textVar,
+                text = '(char*)%s_text' % self.objectName(),
+                fontName = fontPointerName
+            )
 
     @staticmethod
     def ngl_draw(**kwargs):

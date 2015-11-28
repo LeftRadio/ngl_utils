@@ -16,9 +16,9 @@ class NCodeService(object):
 
     @staticmethod
     def iconName(bitmaps, key):
-        for bn in bitmaps:
-            if key in bitmaps[bn]:
-                return os.path.basename(bn).split('.')[0]
+        for bmp in bitmaps:
+            if key in bmp.objects:
+                return bmp.name
         return None
 
     @staticmethod
@@ -74,13 +74,13 @@ class NCodeGen(object):
     """ doc for NCodeGen"""
 
     @staticmethod
-    def generetePageCode(page):
+    def generetePageCode(page, bitmaps, fonts):
 
         objects = page['objects']
 
         # get templates
         page_template = NCodeService.resourceTemplate('page')
-        func_template = NCodeService.resourceTemplate('function')
+        # func_template = NCodeService.resourceTemplate('function')
 
         # page includes and objects pointers
         page_includes = NCodeGen._generatePageIncludes(page)
@@ -88,10 +88,11 @@ class NCodeGen(object):
 
         # page func prototypes
         protFunctions  = ('static void {page}_Draw(void);\n'
-                          'static void {page}_Click(void);').format(page = page['name'])
+                          'static void {page}_Click(Coordinate data, NGL_TouchType type);'
+                          ).format(page = page['name'])
 
         # create page draw function code
-        drawCode = NCodeGen._generatePageDraw(page)
+        drawCode = NCodeGen._generatePageDraw(page, bitmaps, fonts)
 
         # create page click function code
         clickCode = NCodeGen._generatePageClick(page)
@@ -143,6 +144,7 @@ class NCodeGen(object):
         """
         objects = page['objects']
         objects_pnt = []
+        order = 1
 
         # iter sorted class keys
         for classkey in NCodeService.sortClassKeys(objects):
@@ -150,24 +152,32 @@ class NCodeGen(object):
             # get all dyn object in NGL class
             dobjects = NCodeService.getDynObjects(objects[classkey])
 
-            # Add respect include to page and object array pointer
-            # to NGL_Page struct init code
+            # Add respect object array pointer to NGL_Page struct init code
             if len(dobjects):
+
+                norder = list(dobjects.values())[0].__class__.ngl_order
+
+                if norder != 2**32:
+                    while order < norder:
+                        objects_pnt.append('(void*)0, 0, \n%s' % ('\t'*2))
+                        order += 1
+
                 nm = NCodeService.pageObjectsName(page['name'], classkey)
-                objects_pnt.append('%s,\n%s' % (nm, '\t'*4))
+                ln = len(NCodeService.getDynObjects(objects[classkey]))
+                objects_pnt.append('%s, %s, \n%s' % (nm, ln, '\t'*2))
+
+            order += 1
 
         return objects_pnt
 
     @staticmethod
-    def _generatePageDraw(page):
+    def _generatePageDraw(page, bitmaps, fonts):
 
         # get templates
         template = NCodeService.resourceTemplate('function')
         objdraw_template = NCodeService.resourceTemplate('page_obj_draw')
         dobj_template = NCodeService.resourceTemplate('page_dobj_draw')
 
-        # primitives = [obj for obj in page['objects'] if obj.static is True]
-        # primitives = page['objects']
         primitives_code = ''
         dobjects_code = ''
 
@@ -183,26 +193,12 @@ class NCodeGen(object):
         # static objects
         for key in sprmitives:
             if primitives[key].getStatic() is True:
-                iconame = NCodeService.iconName(page['bitmaps'], key)
+                iconame = NCodeService.iconName(bitmaps, key)
                 code = primitives[key].doNGLCode(iconame=iconame)
                 primitives_code += code + '\n\t\t'
 
         # dyn objects
-        for classkey in NCodeService.sortClassKeys(page['objects']):
-
-            dobjects = NCodeService.getDynObjects(page['objects'][classkey])
-
-            if len(dobjects):
-                nm = NCodeService.pageObjectsName(page['name'], classkey)
-                obj_cnt_def = NCodeService.pageObjectsCountName(nm)
-
-                # drawfunc = primitives[key].doNGLCode(iconame=iconame)
-                obj_class = list(dobjects.values())[0].__class__
-                drawfunc = obj_class.ngl_draw(name = nm, index = 'cnt')
-
-                dobjects_code += dobj_template.format(objname = classkey,
-                                                      objcnt = obj_cnt_def,
-                                                      drawfunc = drawfunc)
+        dobjects_code = ( 'NGL_GUI_DrawPageObjects();' )
 
         # page all objects draw template format
         _backcolor = hex(page['background_color'])
@@ -213,10 +209,14 @@ class NCodeGen(object):
                                             pageName = page['name'])
 
         # final format code and return
-        return template.format(func_name = page['name']+ '_Draw',
-                               func_desc = 'Draw page objects function',
-                               static = 'static',
-                               func_code = func_code)
+        return template.format(
+            func_name = page['name']+ '_Draw',
+            func_desc = 'Draw page objects function',
+            static = 'static',
+            ret = 'void',
+            fargs = 'void',
+            func_code = func_code
+        )
 
     @staticmethod
     def _generatePageClick(page):
@@ -228,6 +228,8 @@ class NCodeGen(object):
             func_name = page['name']+ '_Click',
             func_desc = 'Common click page objects',
             static = 'static',
+            ret = 'void',
+            fargs = 'Coordinate data, NGL_TouchType type',
             func_code = '')
 
     @staticmethod
@@ -244,16 +246,22 @@ class NCodeGen(object):
             classobjects = page['objects'][classkey]
 
             for item in NCodeService.getObjectsEvents(classobjects):
-                event = func_template.format( static='static',
-                                              func_name=item,
-                                              func_desc='Item/Items click event',
-                                              func_code='' )
+
+                event = func_template.format(
+                    func_name=item,
+                    func_desc='Item/Items click event',
+                    static='static',
+                    ret = 'void',
+                    fargs = 'void',
+                    func_code=''
+                )
+
                 out_code += event + '\n\n'
 
         return out_code
 
     @staticmethod
-    def generateObjectsHeader(page):
+    def generateObjectsHeader(page, bitmaps, fonts):
         """ generate objects headers """
 
         primitives = ['NGL_Line', 'NGL_Rect', 'NGL_Bitmap']
@@ -264,12 +272,12 @@ class NCodeGen(object):
         for classkey in objects:
             # not generate header if object is primitive or bitmap
             if classkey not in primitives and len(objects[classkey]):
-                headers[classkey] = NCodeGen._hheader(page, classkey)
+                headers[classkey] = NCodeGen._hheader(page, bitmaps, fonts, classkey)
 
         return headers
 
     @staticmethod
-    def _hheader(page, objclass):
+    def _hheader(page, bitmaps, fonts, objclass):
 
         # get templates and objects
         header_template = NCodeService.resourceTemplate('header')
@@ -288,7 +296,7 @@ class NCodeGen(object):
         # generate code for non static objects
         dobjects = NCodeService.getDynObjects(objects)
         for key in dobjects:
-            iconame = NCodeService.iconName(page['bitmaps'], key)
+            iconame = NCodeService.iconName(bitmaps, key)
             code += dobjects[key].doNGLCode(iconame=iconame) + '\n\n'
             pointers.append('&%s, ' % key)
 
@@ -306,8 +314,8 @@ class NCodeGen(object):
         # final format header and return result
         return header_template.format(
             pageName = page['name'],
-            prefix = '123',
-            brief = '123',
+            prefix = '',
+            brief = '',
             date = datetime.now(),
             header_define = '__%s_H' % nm.upper(),
             defines = obj_defines,
@@ -342,7 +350,6 @@ class NCodeGen(object):
             int_vars = '',
             varsText = 'extern NGL_Page %s;' % page['name']
         )
-
 
 
 class NFontCodeGen(object):
