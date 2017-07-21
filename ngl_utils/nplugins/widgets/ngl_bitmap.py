@@ -61,7 +61,7 @@ class NGL_Bitmap(NGL_Base):
 
         # ico name
         if 'iconame' in kwargs and kwargs['iconame'] is not None:
-            icon_name = '(NGL_Bitmap*)&' + kwargs['iconame']
+            icon_name = '(NGL_Image*)&' + kwargs['iconame']
         else:
             icon_name = '(void*)0'
 

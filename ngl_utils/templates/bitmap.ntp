@@ -10,7 +10,7 @@ const {datatype} {name}_data[{data_len_in_words}] = {{
 }};
 
 // Bitmap information for {name}
-const NGL_Bitmap {name} = {{
+const NGL_Image {name} = {{
     {width},            // Picture Width - 1
     {height},            // Picture Height - 1
     {compressed},        // Copressed flag, none - 0, rle - 1, jpg - 2

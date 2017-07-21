@@ -73,7 +73,6 @@ class NBitmapsConverter(object):
         else:
             r, g, b = NGL_Colors.getRGB(backcolor)
             Qbackcolor = QColor(r, g, b)
-
             # 1px image and painter for images with alfa
             img = QImage(1,1, QImage.Format_ARGB32)
             painter = QPainter()

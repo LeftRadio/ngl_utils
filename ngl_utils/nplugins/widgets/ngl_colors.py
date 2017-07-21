@@ -33,8 +33,8 @@ class NGL_Colors(object):
 
     @staticmethod
     def getRGB(ngl_color):
-        r = (ngl_color & 0xF800) << 8
-        g = (ngl_color & 0x07E0) << 5
+        r = (ngl_color & 0xF800) >> 8
+        g = (ngl_color & 0x07E0) >> 3
         b = (ngl_color & 0x001F) << 3
 
         return (r, g, b)

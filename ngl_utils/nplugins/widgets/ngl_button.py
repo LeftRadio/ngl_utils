@@ -234,7 +234,7 @@ class NGL_Button(NGL_Base):
         backcolor, color = self._getColors()
 
         if 'iconame' in kwargs and kwargs['iconame'] is not None:
-            icon_name = '(NGL_Bitmap*)&' + kwargs['iconame']
+            icon_name = '(NGL_Image*)&' + kwargs['iconame']
         else:
             icon_name = '(void*)0'
 

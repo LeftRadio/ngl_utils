@@ -156,17 +156,16 @@ class NCodeGen(object):
             if len(dobjects):
 
                 norder = list(dobjects.values())[0].__class__.ngl_order
-
                 if norder != 2**32:
                     while order < norder:
-                        objects_pnt.append('(void*)0, 0, \n%s' % ('\t'*2))
+                        objects_pnt.append('(void*)0, 0, \n%s' % (' '*8))
                         order += 1
 
                 nm = NCodeService.pageObjectsName(page['name'], classkey)
                 ln = len(NCodeService.getDynObjects(objects[classkey]))
-                objects_pnt.append('%s, %s, \n%s' % (nm, ln, '\t'*2))
+                objects_pnt.append('%s, %s, \n%s' % (nm, ln, ' '*8))
 
-            order += 1
+                order += 1
 
         return objects_pnt
 
@@ -468,7 +467,7 @@ class NBitmapCodeGen(object):
 
         bitmaps_code = ''
         for bmp in bitmaps:
-            bitmaps_code += 'extern NGL_Bitmap %s;\n' % bmp.name
+            bitmaps_code += 'extern NGL_Image %s;\n' % bmp.name
 
         return header_template.format(
             pageName = '',
