@@ -177,10 +177,10 @@ class NUIC(object):
         dirs = {}
         basepath = kwargs[ 'basepath' ]
         dirs['base'] = basepath
-        dirs['pages'] = os.path.join( basepath, 'pages\\' )
-        dirs['page'] = os.path.join( basepath, 'pages\\' + kwargs[ 'pagename' ] )
-        dirs['bitmaps'] = os.path.join( basepath, 'bitmaps\\' )
-        dirs['fonts'] = os.path.join( basepath, 'fonts\\' )
+        dirs['pages'] = os.path.join( basepath, 'pages/' )
+        dirs['page'] = os.path.join( basepath, 'pages/' + kwargs[ 'pagename' ] )
+        dirs['bitmaps'] = os.path.join( basepath, 'bitmaps/' )
+        dirs['fonts'] = os.path.join( basepath, 'fonts/' )
 
         # create dirs
         for _dir in dirs.keys():
@@ -284,7 +284,7 @@ def createArgParser():
                             default = './code',
                             metavar = 'D',
                             help = ( '\t generated code out directory '
-                                     '[default: \'%s\']' % '.\\Code' ) )
+                                     '[default: \'%s\']' % './Code' ) )
 
     parser.add_argument( '--bmp-cmprs', dest = 'bitmap_compress', type = str,
                             default = 'AUTO',

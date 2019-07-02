@@ -68,7 +68,7 @@ class NFontConverter(object):
     @staticmethod
     def font_charBmp(font, char):
         metric = QFontMetrics( font ).boundingRect( char )
-        char_rect = QRect( 0, 0, metric.width(), metric.height() )
+        char_rect = QRect( 0, 0, metric.width()+1, metric.height() )
         chr_img = QImage( char_rect.width()+1, char_rect.height(), QImage.Format_Mono )
         chr_img.fill(0)
 
@@ -131,8 +131,7 @@ class NFontConverter(object):
             # for each column
             for col in range( bmp.width() ):
 
-                # if pixel not 0 set the appropriate bit in the page
-                # print( 'bR:%d, px:%d' % (bitsRead, bmp.pixel(col, row) & 0x00FFFFFF) )
+                # if pixel not 0 set the appropriate bit in the page                
                 if bmp.pixel(col, row) & 0x00FFFFFF:
                     val |= (1 << (7 - bitsRead))
 
@@ -141,14 +140,14 @@ class NFontConverter(object):
                 # have we filled a page?
                 if bitsRead == 8 or col == bmp.width() - 1:
                     # add byte to page array
-                    row_code.append(val)
+                    row_code.append(val)                    
                     # zero out current value and bits read
                     val = bitsRead = 0
+            # append row code byte or code bytes list if char width not fit to one byte - 8 bit
+            bitmap_code.append(row_code)
 
-            # print( 'bits %d, val %d' % (bitsRead, val) )
-            bitmap_code.append( row_code )
-
-        return bitmap_code, len(row_code) * len(bitmap_code)
+        # return bitmap raw code in 0/1 format bytes, also return full char len in bytes
+        return bitmap_code, len(bitmap_code) * ((bmp.width() + 8) // 8)
 
 
 
